@@ -1,7 +1,7 @@
 name: Update Container Image
 on:
   schedule:
-    - cron:  '0 10 * * *'
+    - cron:  '36 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -27,9 +27,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v3
         with:
-#          push: true
-          tags: |
-            borgbackup:latest
-            borgbackup:${{ steps.borgbackup.outputs.release_tag }}
+          push: true
+          tags: borgbackup:latest,borgbackup:${{ steps.borgbackup.outputs.release_tag }}
           build-args: |
             version=${{ steps.borgbackup.outputs.release_tag }}
