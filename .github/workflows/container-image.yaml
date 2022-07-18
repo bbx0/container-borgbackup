@@ -35,7 +35,6 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: .
           push: true
           tags:  ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=${{ github.repository_owner }}/borgbackup:latest
