@@ -16,4 +16,5 @@ jobs:
           image-names: borgbackup
           keep-at-least: 1
           untagged-only: true
+          account-type: personal
           token: ${{ secrets.GITHUB_TOKEN }}
