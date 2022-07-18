@@ -14,6 +14,7 @@ jobs:
         uses: snok/container-retention-policy@v1
         with:
           image-names: borgbackup
+          cut-off: 1 day ago UTC
           keep-at-least: 1
           untagged-only: true
           account-type: personal
