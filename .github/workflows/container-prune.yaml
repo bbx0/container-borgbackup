@@ -1,0 +1,19 @@
+name: Prune untagged container images
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # every day at midnight
+  workflow_dispatch:
+
+jobs:
+  prune-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        name: Delete all untagged images except the last
+        uses: snok/container-retention-policy@v1
+        with:
+          image-names: borgbackup
+          keep-at-least: 1
+          untagged-only: true
+          token: ${{ secrets.GITHUB_TOKEN }}
