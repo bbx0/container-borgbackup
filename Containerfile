@@ -33,27 +33,33 @@ LABEL \
   org.opencontainers.image.authors="39773919+bbx0@users.noreply.github.com" \
   org.opencontainers.image.base.name=${base_image}
 
-# Download the archive, signature and public key to /tmp/
-ADD ${archive_url} ${archive_url}.asc ${public_key_url} /tmp/
-
 # Setup the image
 # - Install packages
-#   - openssh-client: usage in BORG_RSH
-#   - sqv: signature verification of downloaded archives (removed from final image)
+#   - openssh-client: for usage with BORG_RSH
+# - Install temporary packages (removed from final image)
+#   - sqv: signature verification of downloaded archives 
+#   - curl: download the archives
+#   - ca-certificates: trusted CAs for curl (HTTPS)
+# - Download the archive, signature and public key to /tmp
 # - Verify the archive with the GPG Key (sqv only exits with 0 if everything is okay)
 # - Extract to /usr/local/lib/borg/
-# - Remove downloaded archives
 # - Link the binary into PATH
+# - Remove downloaded archives and temporary packages
 # - Test that the binary executes
+WORKDIR /tmp
 RUN \
-  cd /tmp; \
-  apt-get -qq update && \ 
-  apt-get -qq --no-install-recommends install openssh-client sqv && \
+  export DEBIAN_FRONTEND=noninteractive; \
+  apt-get -y -qq update && \ 
+  apt-get -y -qq --no-install-recommends install openssh-client sqv curl ca-certificates && \
+  curl --fail --silent --show-error --location --remote-name-all \
+  --url ${archive_url} \
+  --url ${archive_url}.asc \
+  --url ${public_key_url} && \
   sqv ${archive}.asc ${archive} --keyring ${public_key} && \
   tar --extract --auto-compress --file="${archive}" --strip-components=1 --one-top-level=/usr/local/lib/borg && \
-  rm /tmp/* && \
-  apt-get -qq purge sqv && \
-  apt-get -qq clean && \
-  rm -rf /var/lib/apt/lists/*; \
   ln -s /usr/local/lib/borg/borg.exe /usr/local/bin/borg && \
+  rm /tmp/* && \
+  apt-get -y -qq --purge --auto-remove remove sqv curl ca-certificates && \
+  apt-get -y -qq clean && \
+  rm -rf /var/lib/apt/lists/*; \
   borg --version
