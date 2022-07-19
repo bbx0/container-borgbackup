@@ -8,7 +8,7 @@ ARG base_image=docker.io/debian:bullseye-slim
 FROM ${base_image}
 ARG version
 ARG base_image
-ARG archive=borg-linuxnew64.tgz
+ARG archive=borg-linuxnew64
 ARG archive_url=https://github.com/borgbackup/borg/releases/download/${version}/${archive}
 # Signing Key: Thomas Waldmann <tw@waldmann-edv.de
 ARG public_key=6D5BEF9ADD2075805747B70F9F88FB52FAF7B393
@@ -42,8 +42,7 @@ LABEL \
 #   - ca-certificates: trusted CAs for curl (HTTPS)
 # - Download the archive, signature and public key to /tmp
 # - Verify the archive with the GPG Key (sqv only exits with 0 if everything is okay)
-# - Extract to /usr/local/lib/borg/
-# - Link the binary into PATH
+# - Move the binary into PATH
 # - Remove downloaded archives and temporary packages
 # - Test that the binary executes
 WORKDIR /tmp
@@ -56,8 +55,7 @@ RUN \
   --url ${archive_url}.asc \
   --url ${public_key_url} && \
   sqv ${archive}.asc ${archive} --keyring ${public_key} && \
-  tar --extract --auto-compress --file="${archive}" --strip-components=1 --one-top-level=/usr/local/lib/borg && \
-  ln -s /usr/local/lib/borg/borg.exe /usr/local/bin/borg && \
+  install --mode=755 ${archive} /usr/local/bin/borg && \
   rm /tmp/* && \
   apt-get -y -qq --purge --auto-remove remove sqv curl ca-certificates && \
   apt-get -y -qq clean && \
