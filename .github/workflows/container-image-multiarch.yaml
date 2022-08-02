@@ -18,7 +18,8 @@ jobs:
         id: target
         shell: bash
         run: |
-          [ -z $INPUT_TARGET_VERSION ] && INPUT_TARGET_VERSION=latest;
+          INPUT_TARGET_VERSION="${{ github.event.inputs.target_version }}"
+          [ -z "${INPUT_TARGET_VERSION}" ] && INPUT_TARGET_VERSION=latest;
           TARGET_VERSION=$([ "${INPUT_TARGET_VERSION}" == "latest" ] && curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases/latest | jq -r ".tag_name" || printf "%s" ${INPUT_TARGET_VERSION});
           echo ::set-output name=version::$(printf "%s" ${TARGET_VERSION});
           echo ::set-output name=variant::$(dpkg --compare-versions "${TARGET_VERSION}" gt 1.2.0 && printf "new");
