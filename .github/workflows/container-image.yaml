@@ -21,6 +21,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
+          github-token: ${{ github.token }}
           images: ghcr.io/${{ github.repository_owner }}/borgbackup
           tags: |
             type=semver,pattern={{version}},value=v${{ steps.borgbackup.outputs.release_tag }}
