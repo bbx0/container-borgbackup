@@ -25,7 +25,7 @@ jobs:
           echo ::set-output name=platforms::$(\
             printf "linux/amd64";\
             curl --head --location --fail --silent --output /dev/null https://borg.bauerj.eu/bin/borg-"${TARGET_VERSION}"-arm64 && printf ",linux/arm64"; \
-            curl --head --location --fail --silent --output /dev/null https://borg.bauerj.eu/bin/borg-"${TARGET_VERSION}"-armv7 && printf ",linux/armv7";);
+            curl --head --location --fail --silent --output /dev/null https://borg.bauerj.eu/bin/borg-"${TARGET_VERSION}"-armv7 && printf ",linux/arm/v7";);
           echo ::set-output name=latest::$([ "${INPUT_TARGET_VERSION}" == "latest" ] && printf "true" || printf "false")
       -
         name: Set up QEMU

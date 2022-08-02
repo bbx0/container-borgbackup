@@ -1,2 +1,1 @@
-# Ignore everything unless whitelisted below
-*
+.containerignore
