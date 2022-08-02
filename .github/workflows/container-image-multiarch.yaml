@@ -1,0 +1,65 @@
+name: Update Container Image on target platforms
+on:
+  schedule:
+    - cron:  '36 14 * * *'
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: 'BorgBackup release'
+        required: false
+        default: 'latest'
+
+jobs:
+  updateContainer:
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        name: Get BorgBackup target release and supported platforms
+        id: target
+        shell: bash
+        run: |
+          [ -z $INPUT_TARGET_VERSION ] && INPUT_TARGET_VERSION=latest;
+          TARGET_VERSION=$([ "${INPUT_TARGET_VERSION}" == "latest" ] && curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases/latest | jq -r ".tag_name" || printf "%s" ${INPUT_TARGET_VERSION});
+          echo ::set-output name=version::$(printf "%s" ${TARGET_VERSION});
+          echo ::set-output name=variant::$(dpkg --compare-versions "${TARGET_VERSION}" gt 1.2.0 && printf "new");
+          echo ::set-output name=platforms::$(\
+            printf "linux/amd64";\
+            curl --head --location --fail --silent --output /dev/null https://borg.bauerj.eu/bin/borg-"${TARGET_VERSION}"-arm64 && printf ",linux/arm64"; \
+            curl --head --location --fail --silent --output /dev/null https://borg.bauerj.eu/bin/borg-"${TARGET_VERSION}"-armv7 && printf ",linux/armv7";);
+          echo ::set-output name=latest::$([ "${INPUT_TARGET_VERSION}" == "latest" ] && printf "true" || printf "false")
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          github-token: ${{ github.token }}
+          images: ghcr.io/${{ github.repository_owner }}/borgbackup
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}},value=v${{ steps.target.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ steps.target.outputs.version }}
+            type=semver,pattern={{major}},value=v${{ steps.target.outputs.version }}
+            type=raw,value=latest,enable=${{ steps.target.outputs.latest }}
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags:  ${{ steps.meta.outputs.tags }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/borgbackup:latest
+          cache-to: type=inline
+          platforms: ${{ steps.target.outputs.platforms }}
+          build-args: |
+            version=${{ steps.target.outputs.version }}
+            borg_linux_amd64_variant=${{ steps.target.outputs.variant }}
