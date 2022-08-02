@@ -58,6 +58,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v3
         with:
+          file: Containerfile.distroless-multiarch
           push: true
           tags:  ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/borgbackup:latest
