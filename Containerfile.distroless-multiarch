@@ -45,9 +45,9 @@ ENV archive_url=https://borg.bauerj.eu/bin/borg-${version}-arm64
 FROM platform-${TARGETOS}-${TARGETARCH} as download-borgbackup
 ARG version
 WORKDIR /tmp
-ADD --link --chmod=755 ${archive_url} borg
-ADD --link ${archive_url}.asc borg.asc
-ADD --link ${public_key_url} public_key.asc
+ADD --chmod=755 ${archive_url} borg
+ADD ${archive_url}.asc borg.asc
+ADD ${public_key_url} public_key.asc
 
 # Stage: verify-borgbackup
 # Install sqv in a dedicated stage to allow native execution on buildplatform
@@ -59,7 +59,7 @@ RUN \
     export DEBIAN_FRONTEND=noninteractive; \
     apt-get -y -qq update && \ 
     apt-get -y -qq --no-install-recommends install sqv
-COPY --link --from=download-borgbackup /tmp .
+COPY --from=download-borgbackup /tmp .
 RUN sqv borg.asc borg --keyring public_key.asc
 
 # Stage: test-borgbackup
@@ -67,7 +67,7 @@ RUN sqv borg.asc borg --keyring public_key.asc
 FROM ${debian_image} as test-borgbackup
 ARG version
 WORKDIR /tmp
-COPY --link --from=verify-borgbackup /tmp .
+COPY --from=verify-borgbackup /tmp .
 RUN ./borg --version | tee version && \
     grep --silent --fixed-strings "borg ${version}" version
 
@@ -100,8 +100,8 @@ RUN \
 # Copy the borg binaries into the distroless image
 # Execute the binaries to check if all dependencies are fullfilled
 FROM ${distroless_image} as make-distroless
-COPY --link --from=download-dependencies ["/dpkg", "/"]
-COPY --link --from=test-borgbackup ["/tmp/borg", "/usr/local/bin/borg"]
+COPY --from=download-dependencies ["/dpkg", "/"]
+COPY --from=test-borgbackup ["/tmp/borg", "/usr/local/bin/borg"]
 
 # Stage: test-distroless
 # Execute the binaries to check if all dependencies are fullfilled
