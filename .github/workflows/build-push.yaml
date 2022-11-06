@@ -69,15 +69,6 @@ jobs:
             type=pep440,pattern={{version}},value=${{ env.BORG_VERSION }}
             type=pep440,pattern={{major}}.{{minor}},value=${{ env.BORG_VERSION }},enable=${{ inputs.tag_major_minor }}
             type=pep440,pattern={{major}},value=${{ env.BORG_VERSION }},enable=${{ inputs.tag_major_minor }}
-          labels: |
-            org.opencontainers.image.title="BorgBackup"
-            org.opencontainers.image.description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption."
-            org.opencontainers.image.licenses="BSD-3-Clause"
-            org.opencontainers.image.vendor="BorgBackup Community (unofficial)"
-            org.opencontainers.image.version="${{ env.BORG_VERSION }}"
-            org.opencontainers.image.source="https://github.com/bbx0/container-borgbackup"
-            org.opencontainers.image.authors="39773919+bbx0@users.noreply.github.com"
-            org.opencontainers.image.base.name="${{ inputs.base_image }}"
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -93,7 +84,15 @@ jobs:
           pull: true
           push: true
           tags:  ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            org.opencontainers.image.title=BorgBackup
+            org.opencontainers.image.description=BorgBackup is a deduplicating backup program with support for compression and authenticated encryption.
+            org.opencontainers.image.licenses=BSD-3-Clause
+            org.opencontainers.image.vendor=BorgBackup Community (unofficial)
+            org.opencontainers.image.version=${{ env.BORG_VERSION }}
+            org.opencontainers.image.source=https://github.com/bbx0/container-borgbackup
+            org.opencontainers.image.authors=39773919+bbx0@users.noreply.github.com
+            org.opencontainers.image.base.name=${{ inputs.base_image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: "linux/amd64,linux/arm64,linux/arm/v7"
