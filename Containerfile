@@ -45,9 +45,11 @@ RUN --mount=type=cache,target=${GIT_CACHE_DIR},sharing=locked \
   git -C ${PIP_SRC_DIR} -c advice.detachedHead=false clone --depth 1 --branch ${version} file://${GIT_CACHE_DIR}/borg.git borgbackup
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
+ARG NO_CYTHON_COMPILE=true
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   mkdir -p ${PIP_WHEEL_DIR} && \
   pip install pkgconfig no-manylinux && \
+  pip install Cython && \
   pip wheel --wheel-dir=${PIP_WHEEL_DIR} --no-binary=:all: --use-feature=no-binary-enable-wheel-cache ${PIP_SRC_DIR}/borgbackup && \
   pip install --no-index --no-cache-dir --find-links=${PIP_WHEEL_DIR} --only-binary=:all: borgbackup==${version}
 
