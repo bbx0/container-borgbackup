@@ -63,7 +63,6 @@ jobs:
           tags: |
             type=pep440,pattern={{version}},value=${{ env.BORG_VERSION }}
             type=pep440,pattern={{major}}.{{minor}},value=${{ env.BORG_VERSION }},enable=${{ inputs.tag_major_minor }}
-            type=pep440,pattern={{major}},value=${{ env.BORG_VERSION }},enable=${{ inputs.tag_major_minor }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
