@@ -1,0 +1,29 @@
+name: Build and push all supported versions of the BorgBackup container image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call-build-push:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "1.1"
+            prerelease: false
+            tag_major_minor: true
+            base_image: "docker.io/python:3-slim-bullseye"
+          - version: "1.2"
+            prerelease: false
+            tag_major_minor: true
+            base_image: "docker.io/python:3-slim-bullseye"
+          - version: "2.0"
+            prerelease: true
+            tag_major_minor: false
+            base_image: "docker.io/python:3-slim-bullseye"
+    uses: ./.github/workflows/build-push.yaml
+    with:
+      borg_version: ${{ matrix.version }}
+      prerelease: ${{ matrix.prerelease }}
+      tag_major_minor: ${{ matrix.tag_major_minor }}
+      base_image: ${{ matrix.base_image }}
