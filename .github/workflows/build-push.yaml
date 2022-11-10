@@ -1,5 +1,4 @@
 name: Build and Push BorgBackup Container Image
-concurrency: build-push
 
 on:
   workflow_call:
