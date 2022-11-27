@@ -99,8 +99,8 @@ jobs:
           pull: true
           push: true
           tags: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}"
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ github.workflow }}:${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ github.workflow }}:${{ matrix.platform }},mode=max
           platforms: ${{ matrix.platform }}
           build-args: |
             version=${{ env.BORG_VERSION }}
