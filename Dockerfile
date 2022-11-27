@@ -12,6 +12,7 @@ ARG version
 ARG TARGET_DIR=/opt/borg
 ARG PIP_ROOT_USER_ACTION=ignore PIP_CACHE_DIR=/var/local/cache/pip PIP_WHEEL_DIR=${TARGET_DIR}/wheels PIP_SRC_DIR=${TARGET_DIR}/src PIP_DISABLE_PIP_VERSION_CHECK=1
 ARG GIT_CACHE_DIR=/var/local/cache/git
+ARG APT_CACHE_ID=apt-cache-${TARGETARCH}${TARGETVARIANT}
 ARG BORG_FUSE_IMPL=none BORG_BASE_DIR=/borg
 
 ### Build stage ###
@@ -22,8 +23,8 @@ FROM ${base_image} as build
 # Build: Install OS build dependencies (and cache APT across builds) 
 # - Check runtime dependencies (The APT cache is empty in the base image, so dpkg-query will fail for any package not installed prior to first apt update.)
 # - https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies
-ARG DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=cache,id=build-apt-cache,target=/var/cache/apt,sharing=locked --mount=type=cache,id=build-apt-lib,target=/var/lib/apt,sharing=locked \
+ARG DEBIAN_FRONTEND=noninteractive APT_CACHE_ID
+RUN --mount=type=cache,id=build-${APT_CACHE_ID},target=/var/cache/apt,sharing=locked --mount=type=cache,id=build-${APT_CACHE_ID}-lib,target=/var/lib/apt,sharing=locked \
   dpkg-query --show --showformat='${Package}:${db:Status-Status}\n' libacl1 libssl1.1 liblz4-1 libzstd1 libxxhash0 libcrypt1 libffi7 && \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
@@ -83,8 +84,8 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp --
 FROM ${base_image} as python
 
 # Install a ssh client to support remote repositories
-ARG DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=cache,id=final-apt-cache,target=/var/cache/apt,sharing=locked --mount=type=cache,id=final-apt-lib,target=/var/lib/apt,sharing=locked \
+ARG DEBIAN_FRONTEND=noninteractive APT_CACHE_ID
+RUN --mount=type=cache,id=python-${APT_CACHE_ID},target=/var/cache/apt,sharing=locked --mount=type=cache,id=python-${APT_CACHE_ID}-lib,target=/var/lib/apt,sharing=locked \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
   apt-get -y -qq update && \ 

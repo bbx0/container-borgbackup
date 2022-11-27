@@ -7,14 +7,15 @@ ARG distroless_image=gcr.io/distroless/base-debian11
 
 # the pyinstaller bootloader is architecture specific but the wheel is marked as "any" (use a cache dir per ARCH)
 ARG PIP_CACHE_DIR=/var/local/cache/pip/${TARGETARCH}${TARGETVARIANT}
+ARG APT_CACHE_ID=apt-cache-${TARGETARCH}${TARGETVARIANT}
 
 ### Build stage ###
 
 FROM ${borg_image} as pyinstaller
 
 # Build: Install OS build dependencies (and cache APT across builds) 
-ARG DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=cache,id=build-apt-cache,target=/var/cache/apt,sharing=locked --mount=type=cache,id=build-apt-lib,target=/var/lib/apt,sharing=locked \
+ARG DEBIAN_FRONTEND=noninteractive APT_CACHE_ID
+RUN --mount=type=cache,id=pyinstaller-${APT_CACHE_ID},target=/var/cache/apt,sharing=locked --mount=type=cache,id=pyinstaller-${APT_CACHE_ID}-lib,target=/var/lib/apt,sharing=locked \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
   apt-get -y -qq update && \ 
@@ -39,8 +40,9 @@ RUN pyinstaller --log-level ERROR --onedir --strip --noupx --noconfirm --clean -
 FROM ${borg_image} as dpkg
 ARG DPKG_PYINSTALLER="zlib1g"
 ARG DPKG_OPENSSH="openssh-client zlib1g libselinux1 libgssapi-krb5-2 libpcre2-8-0 libkrb5-3 libk5crypto3 libcom-err2 libkrb5support0 libkeyutils1"
+ARG DEBIAN_FRONTEND=noninteractive APT_CACHE_ID
 WORKDIR /var/cache/apt/archives
-RUN --mount=type=cache,id=distroless-apt-cache,target=/var/cache/apt,sharing=locked --mount=type=cache,id=distroless-apt-lib,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,id=dpkg-${APT_CACHE_ID},target=/var/cache/apt,sharing=locked --mount=type=cache,id=dpkg-${APT_CACHE_ID}-lib,target=/var/lib/apt,sharing=locked \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
   apt-get -y -qq update && \ 
