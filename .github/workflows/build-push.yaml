@@ -127,10 +127,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Push manifest
         run: |
-          [ "${{ inputs.tag_major_minor }}" = "true" ] \
-            && TAG_MAJOR_MINOR = "--tag ${{ env.IMAGE }}:${{ inputs.borg_version }}" \
-            || TAG_MAJOR_MINOR = ""; \
-          docker buildx imagetools create \
-            --tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }} \
-            ${TAG_MAJOR_MINOR} \
-            ${{ env.PLATFORM_IMAGES }}
+          TAGS="--tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }}"; \
+          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}"; \
+          docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_IMAGES }}
