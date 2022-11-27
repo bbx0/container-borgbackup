@@ -10,8 +10,6 @@ jobs:
   call-build-push:
     strategy:
       fail-fast: false
-      # Build in sequence to reuse build cache
-      max-parallel: 1
       matrix:
         include:
           - version: "1.1"
