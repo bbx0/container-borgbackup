@@ -57,7 +57,6 @@ RUN --mount=type=cache,id=distroless-apt-cache,target=/var/cache/apt,sharing=loc
 FROM scratch as rootfs
 COPY --from=pyinstaller ["/pyinstaller/dist/borg.exe","/opt/borg"]
 COPY --from=dpkg ["/dpkg","/"]
-#COPY --from=docker.io/busybox:stable-glibc ["/bin/cat","/bin/cat"]
 COPY --from=pyinstaller ["/bin/cat","/bin/cat"]
 
 # use --target test to verify the binaries work
