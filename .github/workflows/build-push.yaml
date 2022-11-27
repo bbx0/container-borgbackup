@@ -72,15 +72,15 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            name: ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64
+            name: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64"
           - platform: linux/arm64
-            name: ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64
+            name: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64"
           - platform: linux/arm/v7
-            name: ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7
+            name: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7"
           - platform: linux/ppc64le
-            name: ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le
+            name: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le"
           - platform: linux/s390x
-            name: ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x
+            name: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x"
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
