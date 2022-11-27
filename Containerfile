@@ -1,3 +1,7 @@
+# syntax=docker.io/docker/dockerfile:1
+
+# Usage: buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:latest,push=true --opt build-arg:version=1.1.18 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
+
 # Default to Debian 11, which is the current platform for the BorgBackup standalone binary releases
 # the 'offical' python image provides a standalone python build under /usr/local
 # the 'slim' variant comes with pip, setuptools and wheel preinstalled
@@ -45,6 +49,7 @@ RUN --mount=type=cache,target=${GIT_CACHE_DIR},sharing=locked \
   git -C ${PIP_SRC_DIR} -c advice.detachedHead=false clone --depth 1 --branch ${version} file://${GIT_CACHE_DIR}/borg.git borgbackup
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
+# Skip cython self-compilation
 ARG NO_CYTHON_COMPILE=true
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   mkdir -p ${PIP_WHEEL_DIR} && \
@@ -53,14 +58,22 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   pip wheel --wheel-dir=${PIP_WHEEL_DIR} --no-binary=:all: --use-feature=no-binary-enable-wheel-cache ${PIP_SRC_DIR}/borgbackup && \
   pip install --no-index --no-cache-dir --find-links=${PIP_WHEEL_DIR} --only-binary=:all: borgbackup==${version}
 
-# Test: Run the testsuite and abort on error
+# Test: Run self-tests
+# - Confirm borg version to fail on any caching issues
+RUN \
+  borg --version | grep --silent --fixed-strings "borg ${version}" && \
+  borg debug info --debug
+
+### Test stage ###
+FROM build as test
+# - Run the testsuite and abort on error
 # - Confirm borg version to fail on any caching issues
 # - The readonly tests fail as CAP_LINUX_IMMUTABLE is disabled by default in Docker
-ARG PYTHONFAULTHANDLER=1
+
+ARG version PYTHONFAULTHANDLER=1 PIP_SRC_DIR BORG_FUSE_IMPL BORG_BASE_DIR
 WORKDIR ${PIP_SRC_DIR}/borgbackup
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=/borg \
   borg --version | grep --silent --fixed-strings "borg ${version}" && \
-  borg debug info --debug && \
   pip install pytest pytest-benchmark pytest-xdist python-dateutil && \
   pytest --quiet -n auto --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
 
@@ -93,10 +106,6 @@ ENTRYPOINT ["borg"]
 
 # Labeling https://github.com/opencontainers/image-spec/blob/main/annotations.md
 LABEL\
-  description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption." \
-  vendor="BorgBackup Community (unofficial)" \
-  version=${version} \
-  author="39773919+bbx0@users.noreply.github.com" \
   org.opencontainers.image.title="BorgBackup" \
   org.opencontainers.image.description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption." \
   org.opencontainers.image.licenses="BSD-3-Clause" \
