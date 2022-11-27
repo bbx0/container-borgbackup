@@ -2,11 +2,15 @@ name: Build and push all supported versions of the BorgBackup container image
 
 on:
   workflow_dispatch:
+  #“Every day at 04:05.”
+  schedule:
+    - cron: "5 4 * * *"
 
 jobs:
   call-build-push:
     strategy:
       fail-fast: false
+      # Build in sequence to reuse build cache
       max-parallel: 1
       matrix:
         include:
@@ -20,7 +24,7 @@ jobs:
             base_image: "docker.io/python:3.11-slim-bullseye"
           - version: "2.0"
             prerelease: true
-            tag_major_minor: false
+            tag_major_minor: true
             base_image: "docker.io/python:3.11-slim-bullseye"
     uses: ./.github/workflows/build-push.yaml
     with:
