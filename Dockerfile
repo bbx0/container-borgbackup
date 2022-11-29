@@ -5,7 +5,7 @@
 # Default to Debian 11, which is the current platform for the BorgBackup standalone binary releases
 # the 'offical' python image provides a standalone python build under /usr/local
 # the 'slim' variant comes with pip, setuptools and wheel preinstalled
-ARG base_image=docker.io/python:3.11-slim-bullseye
+ARG base_image=docker.io/python:3-slim-bullseye
 ARG version
 
 # Build environment

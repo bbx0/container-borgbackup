@@ -12,9 +12,13 @@ on:
         type: boolean
         default: false
       base_image:
-        description: "The base image to build an publish on."
+        description: "The base image to build and publish on."
         type: string
         default: "docker.io/python:3-slim-bullseye"
+      distroless_image:
+        description: "The distroless image to distribute on."
+        type: string
+        default: "gcr.io/distroless/base-debian11"
       tag_major_minor:
         description: "Assign {major} and {major}.{minor} tags to the image. (e.g. :1 or :1.2)"
         type: boolean
@@ -30,9 +34,13 @@ on:
         type: boolean
         default: false
       base_image:
-        description: "The base image to build an publish on."
+        description: "The base image to build and publish on."
         type: string
         default: "docker.io/python:3-slim-bullseye"
+      distroless_image:
+        description: "The distroless image to distribute on."
+        type: string
+        default: "gcr.io/distroless/base-debian11"
       tag_major_minor:
         description: "Assign {major} and {major}.{minor} tags to the image. (e.g. :1 or :1.2)"
         type: boolean
@@ -73,6 +81,12 @@ jobs:
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7 \
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le \
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x \
+      DISTROLESS_IMAGES: |
+        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64-distroless \
+        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64-distroless \
+        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7-distroless \
+        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le-distroless \
+        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x-distroless \
     strategy:
       fail-fast: false
       matrix:
@@ -111,6 +125,20 @@ jobs:
           build-args: |
             version=${{ env.BORG_VERSION }}
             base_image=${{ inputs.base_image }}
+      - name: Build and push (distroless)
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile.distroless
+          pull: true
+          push: true
+          tags: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless"
+          cache-from: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless
+          cache-to: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless,mode=max
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            version=${{ env.BORG_VERSION }}
+            borg_image=${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}
+            distroless_image=${{ inputs.distroless_image }}
   manifest:
     name: Create multiarch manifest
     needs:
@@ -119,6 +147,7 @@ jobs:
     env:
       BORG_VERSION: ${{ needs.prepare.outputs.BORG_VERSION }}
       PLATFORM_IMAGES: ${{ needs.build-push.outputs.IMAGES }}
+      PLATFORM_DISTROLESS_IMAGES: ${{ needs.build-push.outputs.DISTROLESS_IMAGES }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -136,3 +165,8 @@ jobs:
           TAGS="--tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }}"; \
           [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}"; \
           docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_IMAGES }}
+      - name: Push manifest (distroless)
+        run: |
+          TAGS="--tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-distroless"; \
+          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}-distroless"; \
+          docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_DISTROLESS_IMAGES }}
