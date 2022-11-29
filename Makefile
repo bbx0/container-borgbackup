@@ -96,3 +96,14 @@ podman-clean:
 podman-registry-gc:
 	podman exec registry registry garbage-collect /etc/docker/registry/config.yml --delete-untagged=true --dry-run=false
 #: }}}
+
+#: Build latest major.minor version {{{
+PRERELEASE := false
+version-major-minor(%):
+	$(MAKE) VERSION=$(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==$(PRERELEASE) and .draft==false))|max_by(.published_at).tag_name')
+
+prerelease-major-minor(%): private PRERELEASE := true
+prerelease-major-minor(%): version-major-minor(%)
+
+all: version-major-minor(1.1) version-major-minor(1.2) prerelease-major-minor(2.0)
+#: }}}
