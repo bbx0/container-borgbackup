@@ -41,6 +41,10 @@ on:
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/borgbackup
 
+# Build in sequence to reuse build cache for different borg versions
+# Wait on workflow level as there can only be 1 pending job, ref https://github.com/community/community/discussions/5435
+concurrency: build-push
+
 jobs:
   prepare:
     name: Get BorgBackup target version
@@ -82,8 +86,6 @@ jobs:
           - platform: linux/s390x
             suffix: -s390x
     runs-on: ubuntu-latest
-    # Build in sequence to reuse build cache, when building different borg versions in parallel
-    concurrency: build-push${{ matrix.suffix }}
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
