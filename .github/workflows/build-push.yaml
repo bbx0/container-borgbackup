@@ -43,7 +43,9 @@ env:
 
 # Build in sequence to reuse build cache for different borg versions
 # Wait on workflow level as there can only be 1 pending job, ref https://github.com/community/community/discussions/5435
-concurrency: build-push
+#concurrency: build-push
+# Cache mounts `--mount=type=cache` are not persisted in gha cache https://github.com/moby/buildkit/issues/1512
+# --> no reuse of build artifacts (e.g. pip) between version anyway, just build everything in parallel with a version specific cache.
 
 jobs:
   prepare:
@@ -103,8 +105,8 @@ jobs:
           pull: true
           push: true
           tags: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}"
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,scope=${{ matrix.platform }},mode=max
+          cache-from: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}-${{ matrix.suffix }}
+          cache-to: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}-${{ matrix.suffix }},mode=max
           platforms: ${{ matrix.platform }}
           build-args: |
             version=${{ env.BORG_VERSION }}
