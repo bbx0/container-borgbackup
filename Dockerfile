@@ -55,8 +55,8 @@ ARG NO_CYTHON_COMPILE=true
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   mkdir -p ${PIP_WHEEL_DIR} && \
   pip install pkgconfig no-manylinux && \
-  pip install Cython && \
-  pip wheel --wheel-dir=${PIP_WHEEL_DIR} --no-binary=:all: --use-feature=no-binary-enable-wheel-cache ${PIP_SRC_DIR}/borgbackup && \
+  pip install Cython --install-option="--no-cython-compile" && \
+  pip wheel --wheel-dir=${PIP_WHEEL_DIR} --no-binary=:all: --only-binary=Cython --use-feature=no-binary-enable-wheel-cache ${PIP_SRC_DIR}/borgbackup && \
   pip install --no-index --no-cache-dir --find-links=${PIP_WHEEL_DIR} --only-binary=:all: borgbackup==${version}
 
 # Test: Run self-tests
