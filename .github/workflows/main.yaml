@@ -16,14 +16,17 @@ jobs:
             prerelease: false
             tag_major_minor: true
             base_image: "docker.io/python:3.11-slim-bullseye"
+            distroless_image: "gcr.io/distroless/base-debian11"
           - version: "1.2"
             prerelease: false
             tag_major_minor: true
             base_image: "docker.io/python:3.11-slim-bullseye"
+            distroless_image: "gcr.io/distroless/base-debian11"
           - version: "2.0"
             prerelease: true
             tag_major_minor: true
             base_image: "docker.io/python:3.11-slim-bullseye"
+            distroless_image: "gcr.io/distroless/cc-debian11"
     uses: ./.github/workflows/build-push.yaml
     with:
       borg_version: ${{ matrix.version }}

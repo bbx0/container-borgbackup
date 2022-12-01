@@ -12,6 +12,8 @@
 # Usage:
 #	Build and push
 #	   make -j$(nproc) VERSION=1.1.18
+#      make -j$(nproc) distroless-image VERSION=2.0.0b4 PLATFORM=linux/amd64
+#      make -j$(nproc) version-major-minor(2.0)
 #   Run pytest: 
 #     make -j$(nproc) test VERSION=2.0.0b4
 #	  make test VERSION=2.0.0b4 PLATFORM=linux/amd64
@@ -28,6 +30,7 @@ IMAGE    		:= borgbackup
 VERSION 		?= 1.1.18
 PLATFORM		?= linux/amd64 linux/arm64 linux/arm/v7 linux/ppc64le linux/s390x
 NAME			:= $(REGISTRY)/$(IMAGE):$(VERSION)
+DISTROLESS_IMAGE := gcr.io/distroless/base-debian11
 #: }}}
 
 #: Image tag platform suffixes {{{
@@ -68,14 +71,14 @@ test: test($(PLATFORM))
 
 #: Create distroless variant (needs pushed borgimage as base) {{{
 distroless-image(%): image(%)
-	$(BUILD) --opt filename=Dockerfile.distroless --output type=image,name=$(NAME)$(SUFFIX_$(%))-distroless,push=true --opt build-arg:version=$(VERSION) --opt build-arg:borg_image=$(NAME)$(SUFFIX_$(%)) --opt platform=$(%)
+	$(BUILD) --opt filename=Dockerfile.distroless --output type=image,name=$(NAME)$(SUFFIX_$(%))-distroless,push=true --opt build-arg:version=$(VERSION) --opt build-arg:borg_image=$(NAME)$(SUFFIX_$(%)) --opt build-arg:distroless_image=$(DISTROLESS_IMAGE) --opt platform=$(%)
 distroless-image: distroless-image($(PLATFORM))
 
 distroless-image($(PLATFORMS)): distroless-image($(PLATFORM))
 distroless-manifest: distroless-image($(PLATFORMS)) manifest
 
 distroless-test(%): image(%)
-	$(BUILD) --opt filename=Dockerfile.distroless --output type=image,name=$(NAME)$(SUFFIX_$(%))-distroless,push=false,store=false --opt build-arg:version=$(VERSION) --opt build-arg:borg_image=$(NAME)$(SUFFIX_$(%)) --opt platform=$(%) --opt target=test
+	$(BUILD) --opt filename=Dockerfile.distroless --output type=image,name=$(NAME)$(SUFFIX_$(%))-distroless,push=false,store=false --opt build-arg:version=$(VERSION) --opt build-arg:borg_image=$(NAME)$(SUFFIX_$(%)) --opt build-arg:distroless_image=$(DISTROLESS_IMAGE) --opt platform=$(%) --opt target=test
 distroless-test: distroless-test($(PLATFORM))
 #: }}}
 
@@ -99,11 +102,10 @@ podman-registry-gc:
 
 #: Build latest major.minor version {{{
 PRERELEASE := false
+version-major-minor(2.0): private PRERELEASE := true
+version-major-minor(2.0): private ENV := DISTROLESS_IMAGE=gcr.io/distroless/cc-debian11
 version-major-minor(%):
-	$(MAKE) VERSION=$(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==$(PRERELEASE) and .draft==false))|max_by(.published_at).tag_name')
+	$(MAKE) $(ENV) VERSION=$(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==$(PRERELEASE) and .draft==false))|max_by(.published_at).tag_name')
 
-prerelease-major-minor(%): private PRERELEASE := true
-prerelease-major-minor(%): version-major-minor(%)
-
-all: version-major-minor(1.1) version-major-minor(1.2) prerelease-major-minor(2.0)
+all: version-major-minor(1.1) version-major-minor(1.2) version-major-minor(2.0)
 #: }}}
