@@ -1,0 +1,7 @@
+vulnerability:
+  ignore-unfixed: true
+severity:
+  - HIGH
+  - CRITICAL
+image:
+  platform: linux/amd64
