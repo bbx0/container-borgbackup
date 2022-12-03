@@ -38,7 +38,7 @@ RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/
   apt-get -y -qq update && \ 
   apt-get -y -qq --no-install-recommends install \
   build-essential \
-  libacl1-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
+  libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
   pkg-config \
   sqv
 
