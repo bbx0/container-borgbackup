@@ -125,6 +125,22 @@ jobs:
           build-args: |
             version=${{ env.BORG_VERSION }}
             base_image=${{ inputs.base_image }}
+      - name: Build and self-test (distroless)
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile.distroless
+          target: test
+          pull: true
+          outputs: type=cacheonly
+          cache-from: |
+            type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless-selftest
+          cache-to: |
+            type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless-selftest,mode=max
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            version=${{ env.BORG_VERSION }}
+            borg_image=${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}
+            distroless_image=${{ inputs.distroless_image }}
       - name: Build and push (distroless)
         uses: docker/build-push-action@v3
         with:
@@ -132,8 +148,11 @@ jobs:
           pull: true
           push: true
           tags: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless"
-          cache-from: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless
-          cache-to: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless,mode=max
+          cache-from: |
+            type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless-selftest
+            type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless
+          cache-to: |
+            type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}-distroless,mode=max
           platforms: ${{ matrix.platform }}
           build-args: |
             version=${{ env.BORG_VERSION }}
