@@ -33,3 +33,4 @@ jobs:
       prerelease: ${{ matrix.prerelease }}
       tag_major_minor: ${{ matrix.tag_major_minor }}
       base_image: ${{ matrix.base_image }}
+      distroless_image: ${{ matrix.distroless_image }}
