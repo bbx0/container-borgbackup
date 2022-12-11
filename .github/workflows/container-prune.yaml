@@ -1,21 +1,26 @@
 name: Prune untagged container images
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # every day at midnight
+  workflow_run:
+    workflows:
+      [
+        "Build and push all supported versions of the BorgBackup container image",
+      ]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   prune-ghcr:
     runs-on: ubuntu-latest
     steps:
-      - 
-        name: Delete all untagged images except the last
+      - name: Delete all untagged images older than a month
         uses: snok/container-retention-policy@v1
         with:
           image-names: borgbackup
-          cut-off: 1 day ago UTC
-          keep-at-least: 1
+          cut-off: 1 month ago UTC
+          keep-at-least: 0
           untagged-only: true
           account-type: personal
           token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+          timestamp-to-use: updated_at
