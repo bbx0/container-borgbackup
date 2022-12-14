@@ -65,9 +65,13 @@ jobs:
       - id: version
         name: Get BorgBackup target release
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BORG_VERSION=$(curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("${{ inputs.borg_version }}")))|map(select(.prerelease==${{ inputs.prerelease }} and .draft==false))|max_by(.published_at).tag_name') &&
-          echo "BORG_VERSION=${BORG_VERSION}" >> $GITHUB_OUTPUT
+          BORG_VERSION=$(gh api repos/borgbackup/borg/releases --jq 'map(select(.draft==false and .prerelease==${{ inputs.prerelease }} and (.tag_name | startswith("${{ inputs.borg_version }}"))))|max_by(.published_at).tag_name') &&
+          [ -n "${BORG_VERSION}" ]
+            && echo "BORG_VERSION=${BORG_VERSION}" >> $GITHUB_OUTPUT 
+            || false
   build-push:
     name: Build and Push BorgBackup Container Image
     needs: prepare
