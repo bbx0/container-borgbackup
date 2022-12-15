@@ -201,10 +201,3 @@ jobs:
           [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}-distroless"; \
           [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag docker.io/${{ github.actor }}/borgbackup:${{ inputs.borg_version }}-distroless"; \
           docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_DISTROLESS_IMAGES }}
-      - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v3
-        with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ github.actor }}/borgbackup
-          short-description: ${{ github.event.repository.description }}
