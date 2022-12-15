@@ -205,6 +205,6 @@ jobs:
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ github.actor }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ github.actor }}/borgbackup
           short-description: ${{ github.event.repository.description }}
