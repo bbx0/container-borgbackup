@@ -184,19 +184,27 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
+          registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push manifest
         run: |
           TAGS=" --tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }}"; \
-          TAGS=" --tag ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ env.BORG_VERSION }}"; \
+          TAGS=" --tag docker.io/${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ env.BORG_VERSION }}"; \
           [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}"; \
-          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ inputs.borg_version }}"; \
+          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag docker.io/${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ inputs.borg_version }}"; \
           docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_IMAGES }}
       - name: Push manifest (distroless)
         run: |
           TAGS="  --tag ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-distroless"; \
-          TAGS+=" --tag ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ env.BORG_VERSION }}-distroless"; \
+          TAGS+=" --tag docker.io/${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ env.BORG_VERSION }}-distroless"; \
           [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}-distroless"; \
-          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ inputs.borg_version }}-distroless"; \
+          [ "${{ inputs.tag_major_minor }}" = "true" ] && TAGS+=" --tag docker.io/${{ secrets.DOCKERHUB_USERNAME }}/borgbackup:${{ inputs.borg_version }}-distroless"; \
           docker buildx imagetools create ${TAGS} ${{ env.PLATFORM_DISTROLESS_IMAGES }}
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup
+          short-description: ${{ github.event.repository.description }}
