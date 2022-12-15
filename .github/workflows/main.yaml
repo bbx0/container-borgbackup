@@ -28,6 +28,7 @@ jobs:
             base_image: "docker.io/library/python:3.11-slim-bullseye"
             distroless_image: "gcr.io/distroless/cc-debian11"
     uses: ./.github/workflows/build-push.yaml
+    secrets: inherit
     with:
       borg_version: ${{ matrix.version }}
       prerelease: ${{ matrix.prerelease }}
