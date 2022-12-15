@@ -17,5 +17,5 @@ jobs:
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: peterevans/dockerhub-description
+          repository: ${{ github.actor }}/borgbackup
           short-description: ${{ github.event.repository.description }}
