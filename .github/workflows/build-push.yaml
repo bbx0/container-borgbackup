@@ -46,22 +46,14 @@ on:
         type: boolean
         default: true
 
-env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/borgbackup
-  IMAGE_DOCKER: docker.io/${{ github.repository_owner }}/borgbackup
-
-# Build in sequence to reuse build cache for different borg versions
-# Wait on workflow level as there can only be 1 pending job, ref https://github.com/community/community/discussions/5435
-#concurrency: build-push
-# Cache mounts `--mount=type=cache` are not persisted in gha cache https://github.com/moby/buildkit/issues/1512
-# --> no reuse of build artifacts (e.g. pip) between version anyway, just build everything in parallel with a version specific cache.
-
 jobs:
   prepare:
     name: Get BorgBackup target version
     runs-on: ubuntu-latest
     outputs:
       BORG_VERSION: ${{ steps.version.outputs.BORG_VERSION }}
+      IMAGE_GHCR: ghcr.io/${{ github.repository_owner }}/borgbackup
+      IMAGE_DOCKER: docker.io/${{ github.repository_owner }}/borgbackup
     steps:
       - id: version
         name: Get BorgBackup target release
@@ -72,10 +64,11 @@ jobs:
           BORG_VERSION=$(gh api repos/borgbackup/borg/releases --jq 'map(select(.draft==false and .prerelease==${{ inputs.prerelease }} and (.tag_name | startswith("${{ inputs.borg_version }}"))))|max_by(.published_at).tag_name') &&
           [ -n "${BORG_VERSION}" ] && echo "BORG_VERSION=${BORG_VERSION}" >> $GITHUB_OUTPUT
   build-push:
-    name: Build and Push BorgBackup Container Image
+    name: Build and Push BorgBackup Container Image in GHCR
     needs: prepare
     env:
       BORG_VERSION: ${{ needs.prepare.outputs.BORG_VERSION }}
+      IMAGE: ${{ needs.prepare.outputs.IMAGE_GHCR }}
     outputs:
       # Workaround as collecting job output is tedious
       IMAGES: >-
@@ -169,18 +162,18 @@ jobs:
     env:
       # Borg version tag (e.g. borgbackup:1.2.2 / borgbackup:1.2.2-distroless)
       TAGS: >-
-        --tag ${{ env.IMAGE }}:${{ needs.prepare.outputs.BORG_VERSION }}
-        --tag ${{ env.IMAGE_DOCKER }}:${{ needs.prepare.outputs.BORG_VERSION }}
+        --tag ${{ needs.prepare.outputs.IMAGE_GHCR }}:${{ needs.prepare.outputs.BORG_VERSION }}
+        --tag ${{ needs.prepare.outputs.IMAGE_DOCKER }}:${{ needs.prepare.outputs.BORG_VERSION }}
       TAGS_DISTROLESS: >-
-        --tag ${{ env.IMAGE }}:${{ needs.prepare.outputs.BORG_VERSION }}-distroless
-        --tag ${{ env.IMAGE_DOCKER }}:${{ needs.prepare.outputs.BORG_VERSION }}-distroless
+        --tag ${{ needs.prepare.outputs.IMAGE_GHCR }}:${{ needs.prepare.outputs.BORG_VERSION }}-distroless
+        --tag ${{ needs.prepare.outputs.IMAGE_DOCKER }}:${{ needs.prepare.outputs.BORG_VERSION }}-distroless
       # Optional Major.Minor tag (e.g. borgbackup:1.2 / borgbackup:1.2-distroless)
       TAGS_MAJOR_MINOR: >-
-        --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}
-        --tag ${{ env.IMAGE_DOCKER }}:${{ inputs.borg_version }}
+        --tag ${{ needs.prepare.outputs.IMAGE_GHCR }}:${{ inputs.borg_version }}
+        --tag ${{ needs.prepare.outputs.IMAGE_DOCKER }}:${{ inputs.borg_version }}
       TAGS_DISTROLESS_MAJOR_MINOR: >-
-        --tag ${{ env.IMAGE }}:${{ inputs.borg_version }}-distroless
-        --tag ${{ env.IMAGE_DOCKER }}:${{ inputs.borg_version }}-distroless
+        --tag ${{ needs.prepare.outputs.IMAGE_GHCR }}:${{ inputs.borg_version }}-distroless
+        --tag ${{ needs.prepare.outputs.IMAGE_DOCKER }}:${{ inputs.borg_version }}-distroless
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
