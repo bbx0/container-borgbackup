@@ -1,4 +1,4 @@
-# vim:fileencoding=utf-8:foldmethod=marker
+#!/usr/bin/env -S make -f
 
 # Build the BorgBackup container and its distroless variant into a local registry
 
@@ -49,6 +49,8 @@ borg(%):
 	--opt build-arg:borg_image=$(NAME) \
 	--opt build-arg:distroless_image=$(DISTROLESS_IMAGE) \
 	--opt platform=$(PLATFORM) \
+	--opt attest:sbom= \
+	--opt attest:provenance=mode=max \
 	$(OPTS)
 
 # Distroless variant (needs an already pushed version of borg or fails)
@@ -77,3 +79,5 @@ buildkit-prune:
 .SUFFIXES:
 .PHONY := buildkit-prune borg(%) test(%) distroless(%) distroless-test(%)
 #: }}}
+
+# vim:fileencoding=utf-8:foldmethod=marker
