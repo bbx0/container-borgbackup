@@ -3,7 +3,7 @@
 Distribution of [BorgBackup](https://www.borgbackup.org/) in a docker container. A SSH client is provided within in the image to allow backup to a remote storage.
 
 - GitHub: [bbx0/container-borgbackup](https://github.com/bbx0/container-borgbackup): [Dockerfile](https://github.com/bbx0/container-borgbackup/blob/main/Dockerfile), [Dockerfile.distroless](https://github.com/bbx0/container-borgbackup/blob/main/Dockerfile.distroless)
-- Docker Hub: [bbx0/borgbackup](https://hub.docker.com/repository/docker/bbx0/borgbackup)
+- Docker Hub: [bbx0/borgbackup](https://hub.docker.com/r/bbx0/borgbackup)
 
 This is an unofficial community contribution.
 
@@ -61,7 +61,7 @@ Some environment variables are pre-configured with a default.
 | `BORG_RSH`           |         | Optional: Provide your ssh configuration and make use of a mounted secret to provide the private key. <br /> Example: `--secret=id_private.key,type=mount,mode=0400` <br /> `--env=BORG_RSH="ssh -i /run/secrets/id_private.key -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"` |
 | `BORG_PASSPHRASE`    |         | Optional: Use a container secret to provide the passphrase. <br /> Example: `--secret=BORG_PASSPHRASE,type=env`                                                                                                                                                                                                                  |
 | `BORG_PASSCOMMAND`   |         | Optional: You can provide a container secret as mount and use `cat` to consume it. <br /> Example: `--secret=BORG_PASSPHRASE,type=mount --env=BORG_PASSCOMMAND="cat /run/secrets/BORG_PASSPHRASE"`                                                                                                                               |
-| `BORG_KEY_FILE`      |         | Optional: Use a container secret to us a pre-generated key file. <br /> Example: `--secret=BORG_KEY_FILE,type=mount --env=BORG_KEY_FILE="/run/secrets/BORG_KEY_FILE"`                                                                                                                                                            |
+| `BORG_KEY_FILE`      |         | Optional: Use a container secret to provide a pre-generated key file. <br /> Example: `--secret=BORG_KEY_FILE,type=mount --env=BORG_KEY_FILE="/run/secrets/BORG_KEY_FILE"`                                                                                                                                                       |
 | `BORG_HOST_ID`       |         | Optional: For ephemeral containers you need to provide a static identifier to allow automatic stale lock removal. Must be a globally unique id for the container. <br /> Please check the [documentation][1]. <br /> Example: `--env=BORG_HOST_ID="borgbackup-XYZ@$(hostname --fqdn)"`                                           |
 <!-- markdownlint-restore -->
 
