@@ -55,7 +55,7 @@ ARG NO_CYTHON_COMPILE=true
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   pip install pkgconfig && \
-  pip install Cython --install-option="--no-cython-compile" && \
+  pip install Cython --config-setting="--build-option=--no-cython-compile" && \
   pip wheel ${BORG_SRC_DIR} && \
   pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
 
