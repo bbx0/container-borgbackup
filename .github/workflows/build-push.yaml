@@ -110,7 +110,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           pull: true
           push: true
@@ -124,7 +124,7 @@ jobs:
           # Prevent manifest creation instead of an image for a single platform (https://github.com/docker/build-push-action/issues/755)
           provenance: false
       - name: Build and self-test (distroless)
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           file: Dockerfile.distroless
           target: test
@@ -142,7 +142,7 @@ jobs:
           # Prevent manifest creation instead of an image for a single platform (https://github.com/docker/build-push-action/issues/755)
           provenance: false
       - name: Build and push (distroless)
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           file: Dockerfile.distroless
           pull: true
