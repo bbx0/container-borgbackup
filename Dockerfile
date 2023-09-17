@@ -52,6 +52,7 @@ RUN --mount=type=bind,from=source,target=/mnt/source \
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
 ARG PIP_CACHE_DIR PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 ARG PIP_NO_BINARY=:all:
+ARG PIP_USE_FEATURE=no-binary-enable-wheel-cache
 ARG NO_CYTHON_COMPILE=true
 
 # Borg 2.0.0b7 depends on Cython==3.0.2 which cannot be used to compile msgpack<1.0.6
@@ -63,7 +64,7 @@ ARG PIP_CONSTRAINT
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   pip install pkgconfig && \
-  pip install Cython --config-setting="--build-option=--no-cython-compile" && \
+  pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile" && \
   pip wheel ${BORG_SRC_DIR} && \
   pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
 
