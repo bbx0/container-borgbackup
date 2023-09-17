@@ -15,7 +15,7 @@ You have to manage any [`borg upgrade`](https://borgbackup.readthedocs.io/en/sta
 
 | Tag                             | Base image                          | Comment                                                   |
 | ------------------------------- | ----------------------------------- | --------------------------------------------------------- |
-| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.7-slim-bullseye  | oldstable series                                          |
+| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff)|
 | **ghcr.io/bbx0/borgbackup:1.2** | docker.io/python:3.9-slim-bullseye  | stable series                                             |
 | ghcr.io/bbx0/borgbackup:2.0     | docker.io/python:3.11-slim-bullseye | beta series only for ***testing*** the 2.0.x pre-releases |
 

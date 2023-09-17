@@ -27,7 +27,7 @@ PUSH			:= true
 #: }}}
 
 #: Borg settings {{{
-borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.7-slim-bullseye
+borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
 borg(1.1):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
 borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
 borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
