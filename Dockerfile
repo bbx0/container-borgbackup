@@ -50,9 +50,16 @@ RUN --mount=type=bind,from=source,target=/mnt/source \
   tar --extract --auto-compress --file=/mnt/source/borgbackup-${BORG_VERSION}.tar.gz --strip-components=1
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
-ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
+ARG PIP_CACHE_DIR PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 ARG PIP_NO_BINARY=:all:
 ARG NO_CYTHON_COMPILE=true
+
+# Borg 2.0.0b7 depends on Cython==3.0.2 which cannot be used to compile msgpack<1.0.6
+# Compile before applying PIP_CONSTRAINT
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+  test "${BORG_VERSION}" != "2.0.0b7" || pip install msgpack
+
+ARG PIP_CONSTRAINT
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   pip install pkgconfig && \
