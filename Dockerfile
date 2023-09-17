@@ -51,6 +51,7 @@ RUN --mount=type=bind,from=source,target=/mnt/source \
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
+ARG PIP_NO_BINARY=:all:
 ARG NO_CYTHON_COMPILE=true
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
