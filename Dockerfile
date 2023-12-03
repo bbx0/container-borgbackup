@@ -55,6 +55,11 @@ ARG PIP_NO_BINARY=:all:
 ARG PIP_USE_FEATURE=no-binary-enable-wheel-cache
 ARG NO_CYTHON_COMPILE=true
 
+# Borg 1.2.7 depends on Cython==0.29.36 and 'msgpack >=0.5.6, <=1.0.7, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
+# append a pinned msgpack==1.0.5 to development.lock.txt
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+  test "${BORG_VERSION}" != "1.2.7" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
+
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
   pip install pkgconfig && \
