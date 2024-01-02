@@ -13,11 +13,12 @@ The latest patch release of all [supported](https://github.com/borgbackup/borg/b
 
 You have to manage any [`borg upgrade`](https://borgbackup.readthedocs.io/en/stable/usage/upgrade.html#when-you-do-not-need-borg-upgrade) yourself. Please always read the BorgBackup [Change Log](https://borgbackup.readthedocs.io/en/stable/changes.html#change-log) before switching to a new version tag.
 
-| Tag                             | Base image                          | Comment                                                   |
-| ------------------------------- | ----------------------------------- | --------------------------------------------------------- |
-| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff)|
-| **ghcr.io/bbx0/borgbackup:1.2** | docker.io/python:3.9-slim-bullseye  | stable series                                             |
-| ghcr.io/bbx0/borgbackup:2.0     | docker.io/python:3.11-slim-bullseye | beta series only for ***testing*** the 2.0.x pre-releases |
+| Tag                             | Base image                          | Comment                                                                                                            |
+| ------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
+| **ghcr.io/bbx0/borgbackup:1.2** | docker.io/python:3.9-slim-bullseye  | **stable series**                                                                                                  |
+| ghcr.io/bbx0/borgbackup:1.4     | docker.io/python:3.11-slim-bookworm | only for ***testing*** the [1.4.x](https://github.com/borgbackup/borg/discussions/7975) pre-releases               |
+| ghcr.io/bbx0/borgbackup:2.0     | docker.io/python:3.11-slim-bullseye | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
 
 All images are continuously published based on a [GitHub workflow](https://github.com/bbx0/container-borgbackup/actions/workflows/main.yaml) without human intervention. Make sure to validate the images in your test environment before usage, as you always do. 😉
 
@@ -27,11 +28,12 @@ There is *no* `:latest` tag to reduce any risk of breaking repository data.
 
 A "[distroless](https://github.com/GoogleContainerTools/distroless)" variant is published with suffix `-distroless`. This variant is based on [pyinstaller](https://pyinstaller.org) and Googles distroless [base image](https://github.com/GoogleContainerTools/distroless#docker) to package BorgBackup as a binary and to provide glibc.
 
-| Tag                                    | Base image                      | Comment                                       |
-| -------------------------------------- | ------------------------------- | --------------------------------------------- |
-| ghcr.io/bbx0/borgbackup:1.1-distroless | gcr.io/distroless/base-debian11 |                                               |
-| ghcr.io/bbx0/borgbackup:1.2-distroless | gcr.io/distroless/base-debian11 |                                               |
-| ghcr.io/bbx0/borgbackup:2.0-distroless | gcr.io/distroless/cc-debian11   | only for ***testing*** the 2.0.x pre-releases |
+| Tag                                    | Base image                      | Comment                                                                                                            |
+| -------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| ghcr.io/bbx0/borgbackup:1.1-distroless | gcr.io/distroless/base-debian11 | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
+| ghcr.io/bbx0/borgbackup:1.2-distroless | gcr.io/distroless/base-debian11 | stable series                                                                                                      |
+| ghcr.io/bbx0/borgbackup:1.4-distroless | gcr.io/distroless/base-debian12 | only for ***testing*** the [1.4.x](https://github.com/borgbackup/borg/discussions/7975) pre-releases               |
+| ghcr.io/bbx0/borgbackup:2.0-distroless | gcr.io/distroless/cc-debian11   | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
 
 These binaries are added to the distroless base image:
 

@@ -31,6 +31,8 @@ borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
 borg(1.1):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
 borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
 borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
+borg(1.4):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
+borg(1.4):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
 borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bullseye
 borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian11
 
@@ -61,6 +63,7 @@ distroless(%):		borg(%)	;
 # Test stages
 test(1.1):			XDISTN	?= 4
 test(1.2):			XDISTN	?= 16
+test(1.4):			XDISTN	?= 16
 test(2.0):			XDISTN	?= 8
 test(%):			OPTS	+= --opt target=test
 test(%):			OPTS	+= --opt build-arg:XDISTN=$(XDISTN)
