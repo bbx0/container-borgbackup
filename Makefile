@@ -33,8 +33,8 @@ borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
 borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
 borg(1.4):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
 borg(1.4):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
-borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bullseye
-borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian11
+borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
+borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian12
 
 # Determine latest patch release, when version is not set explicitly
 borg(%):	VERSION				?= $(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==false and .draft==false))|max_by(.published_at).tag_name')
