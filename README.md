@@ -11,7 +11,7 @@ This is an unofficial community contribution.
 
 ```bash
 # BorgBackup requires a persistent internal data volume `/borg` in addition to any repo or source volumes.
-docker run --rm -V borg:/borg bbx0/borgbackup:1.4 --help
+docker run --rm -v borg:/borg bbx0/borgbackup:1.4 --help
 podman run --rm -v borg:/borg ghcr.io/bbx0/borgbackup:1.4 --help
 ```
 
