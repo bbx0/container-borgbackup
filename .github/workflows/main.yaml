@@ -23,7 +23,7 @@ jobs:
             base_image: "docker.io/library/python:3.9-slim-bullseye"
             distroless_image: "gcr.io/distroless/base-debian11"
           - version: "1.4"
-            prerelease: true
+            prerelease: false
             tag_major_minor: true
             base_image: "docker.io/library/python:3.11-slim-bookworm"
             distroless_image: "gcr.io/distroless/base-debian12"

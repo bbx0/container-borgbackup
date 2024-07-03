@@ -4,10 +4,10 @@
 #  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:1.1.18,push=true --opt build-arg:version=1.1.18 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
 #  podman build --file Dockerfile --build-arg version=1.1.18 --tag localhost:5000/borgbackup:1.1.18
 
-# Default to Debian 11, which is the current platform for the BorgBackup standalone binary releases
+# Default to Debian 12, which is the latest platform for the BorgBackup standalone binary releases
 # the 'offical' python image provides a standalone python build under /usr/local
 # the 'slim' variant comes with pip, setuptools and wheel pre-installed
-ARG base_image=docker.io/python:3-slim-bullseye
+ARG base_image=docker.io/python:3-slim-bookworm
 ARG version
 
 # Build environment and defaults
@@ -126,5 +126,5 @@ LABEL\
   org.opencontainers.image.vendor="BorgBackup Community (unofficial)" \
   org.opencontainers.image.version=${BORG_VERSION} \
   org.opencontainers.image.source="https://github.com/bbx0/container-borgbackup" \
-  org.opencontainers.image.authors="39773919+bbx0@users.noreply.github.com" \
+  org.opencontainers.image.authors="Philipp Micheel <bbx0+borgbackup at bitdevs dot de>" \
   org.opencontainers.image.base.name=${base_image}

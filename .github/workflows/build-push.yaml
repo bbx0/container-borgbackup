@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       borg_version:
-        description: "BorgBackup major.minor version to build (e.g. 1.1 or 2.0)"
+        description: "BorgBackup major.minor version to build (e.g. 1.4 or 2.0)"
         type: string
         required: true
       prerelease:
@@ -14,19 +14,19 @@ on:
       base_image:
         description: "The base image to build and publish on."
         type: string
-        default: "docker.io/python:3-slim-bullseye"
+        default: "docker.io/python:3-slim-bookworm"
       distroless_image:
         description: "The distroless image to distribute on."
         type: string
-        default: "gcr.io/distroless/base-debian11"
+        default: "gcr.io/distroless/base-debian12"
       tag_major_minor:
-        description: "Assign {major} and {major}.{minor} tags to the image. (e.g. :1 or :1.2)"
+        description: "Assign {major}.{minor} tags to the image. (e.g. :1.4 or :2.0)"
         type: boolean
         default: true
   workflow_dispatch:
     inputs:
       borg_version:
-        description: "BorgBackup major.minor version to build (e.g. 1.1 or 2.0)"
+        description: "BorgBackup major.minor version to build (e.g. 1.4 or 2.0)"
         type: string
         required: true
       prerelease:
@@ -36,13 +36,13 @@ on:
       base_image:
         description: "The base image to build and publish on."
         type: string
-        default: "docker.io/python:3-slim-bullseye"
+        default: "docker.io/python:3-slim-bookworm"
       distroless_image:
         description: "The distroless image to distribute on."
         type: string
-        default: "gcr.io/distroless/base-debian11"
+        default: "gcr.io/distroless/base-debian12"
       tag_major_minor:
-        description: "Assign {major} and {major}.{minor} tags to the image. (e.g. :1 or :1.2)"
+        description: "Assign {major}.{minor} tags to the image. (e.g. :1.4 or :2.0)"
         type: boolean
         default: true
 

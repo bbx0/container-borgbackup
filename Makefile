@@ -7,14 +7,14 @@
 #		- registry: local registry to push the image to listening at `localhost:5000`
 #   	- buildkit: buildctl is used to compile the image
 #	Build and push:
-#		make "borg(1.2)"
-#		make "distroless(1.2)"
+#		make "borg(1.4)"
+#		make "distroless(1.4)"
 #		make "borg(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64
 #   Run pytest: 
-#		make "test(1.2)" PLATFORM=linux/amd64
+#		make "test(1.4)" PLATFORM=linux/amd64
 #		make "test(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64 OPTS="--no-cache"
 #   Run self test: 
-#	 	make "distroless-test(1.2)" PLATFORM=linux/amd64
+#	 	make "distroless-test(1.4)" PLATFORM=linux/amd64
 #: }}}
 
 #: General settings {{{
@@ -41,7 +41,7 @@ borg(%):	VERSION				?= $(shell curl --fail --silent --location https://api.githu
 #: }}}
 
 #: Targets  {{{
-.DEFAULT_GOAL := borg(1.2)
+.DEFAULT_GOAL := borg(1.4)
 # Create multiarch image (Buildkit with Dockerfile frontend)
 borg(%):
 	buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. \

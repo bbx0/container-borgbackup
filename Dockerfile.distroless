@@ -3,7 +3,7 @@
 # Convert borgbackup container into a "distroless" variant
 ARG version
 ARG borg_image=ghcr.io/bbx0/borgbackup:${version}
-ARG distroless_image=gcr.io/distroless/base-debian11
+ARG distroless_image=gcr.io/distroless/base-debian12
 
 ARG BORG_VERSION=${version}
 ARG BORG_BASE_DIR=/borg

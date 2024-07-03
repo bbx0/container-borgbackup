@@ -7,6 +7,14 @@ Distribution of [BorgBackup](https://www.borgbackup.org/) in a docker container.
 
 This is an unofficial community contribution.
 
+## Quick start
+
+```bash
+# BorgBackup requires a persistent internal data volume `/borg` in addition to any repo or source volumes.
+docker run --rm -V borg:/borg bbx0/borgbackup:1.4 --help
+podman run --rm -v borg:/borg ghcr.io/bbx0/borgbackup:1.4 --help
+```
+
 ## Tags and Variants
 
 The latest patch release of all [supported](https://github.com/borgbackup/borg/blob/master/SECURITY.md) BorgBackup versions are continuously build and published here as container. The shared tags below always link to the latest point release.
@@ -15,9 +23,9 @@ You have to manage any [`borg upgrade`](https://borgbackup.readthedocs.io/en/sta
 
 | Tag                             | Base image                          | Comment                                                                                                            |
 | ------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
-| **ghcr.io/bbx0/borgbackup:1.2** | docker.io/python:3.9-slim-bullseye  | **stable series**                                                                                                  |
-| ghcr.io/bbx0/borgbackup:1.4     | docker.io/python:3.11-slim-bookworm | only for ***testing*** the [1.4.x](https://github.com/borgbackup/borg/discussions/7975) pre-releases               |
+| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2 or 1.4 series](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
+| ghcr.io/bbx0/borgbackup:1.2     | docker.io/python:3.9-slim-bullseye  | maintained series                                                                                                  |
+| **ghcr.io/bbx0/borgbackup:1.4** | docker.io/python:3.11-slim-bookworm | **stable series**                                                                                                  |
 | ghcr.io/bbx0/borgbackup:2.0     | docker.io/python:3.11-slim-bookworm | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
 
 All images are continuously published based on a [GitHub workflow](https://github.com/bbx0/container-borgbackup/actions/workflows/main.yaml) without human intervention. Make sure to validate the images in your test environment before usage, as you always do. 😉
@@ -30,9 +38,9 @@ A ”[distroless](https://github.com/GoogleContainerTools/distroless)” variant
 
 | Tag                                    | Base image                      | Comment                                                                                                            |
 | -------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ghcr.io/bbx0/borgbackup:1.1-distroless | gcr.io/distroless/base-debian11 | [EOL, please upgrade to 1.2.x](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
-| ghcr.io/bbx0/borgbackup:1.2-distroless | gcr.io/distroless/base-debian11 | stable series                                                                                                      |
-| ghcr.io/bbx0/borgbackup:1.4-distroless | gcr.io/distroless/base-debian12 | only for ***testing*** the [1.4.x](https://github.com/borgbackup/borg/discussions/7975) pre-releases               |
+| ghcr.io/bbx0/borgbackup:1.1-distroless | gcr.io/distroless/base-debian11 | [EOL, please upgrade to 1.2 or 1.4 series](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
+| ghcr.io/bbx0/borgbackup:1.2-distroless | gcr.io/distroless/base-debian11 | maintained series                                                                                                  |
+| ghcr.io/bbx0/borgbackup:1.4-distroless | gcr.io/distroless/base-debian12 | **stable series**                                                                                                  |
 | ghcr.io/bbx0/borgbackup:2.0-distroless | gcr.io/distroless/cc-debian12   | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
 
 These binaries are added to the distroless base image:
@@ -83,7 +91,7 @@ Please check the BorgBackup documentation for all available [environment variabl
 See [`docs/`](https://github.com/bbx0/container-borgbackup/tree/main/docs) for examples (e.g. with [`caddy`](https://github.com/bbx0/container-borgbackup/blob/main/docs/example-caddy.md)).
 
 ```bash
-podman run --name borg --rm --read-only --volume borg:/borg ghcr.io/bbx0/borgbackup:1.2 <command>
+podman run --name borg --rm --read-only --volume borg:/borg ghcr.io/bbx0/borgbackup:1.4 <command>
 ```
 
 ## Building
@@ -96,16 +104,16 @@ For local builds take a look at the [`Makefile`](https://github.com/bbx0/contain
 # Build via podman / docker
 podman build \
     --file Dockerfile \
-    --tag localhost:5000/borgbackup:1.2.2
-    --build-arg version=1.2.2 \
-    --build-arg base_image=docker.io/python:3.9-slim-bullseye
+    --tag localhost:5000/borgbackup:1.4.0
+    --build-arg version=1.4.0 \
+    --build-arg base_image=docker.io/python:3.11-slim-bookworm
 
 podman build \
     --file Dockerfile.distroless \
-    --tag localhost:5000/borgbackup:1.2.2-distroless
-    --build-arg version=1.2.2 \
-    --build-arg borg_image=localhost:5000/borgbackup:1.2.2 \
-    --build-arg distroless_image=gcr.io/distroless/base-debian11
+    --tag localhost:5000/borgbackup:1.4.0-distroless
+    --build-arg version=1.4.0 \
+    --build-arg borg_image=localhost:5000/borgbackup:1.4.0 \
+    --build-arg distroless_image=gcr.io/distroless/base-debian12
 ```
 
 ### Test builds
@@ -113,8 +121,8 @@ podman build \
 Running the BorgBackup `pytest` suite is supported. The Dockerfile contains a `test` target, which executes `pytest` on the given borg version. The build-arg `XDISTN` controls parallelization (see [`Makefile`](https://github.com/bbx0/container-borgbackup/blob/main/Makefile)). All readonly tests are skipped as `CAP_LINUX_IMMUTABLE` is disabled by default in Docker.
 
 ```bash
-# Example: Run pytest on borg 1.2 x86_64
-make "test(1.2)" PLATFORM=linux/amd64
+# Example: Run pytest on borg 1.4 x86_64
+make "test(1.4)" PLATFORM=linux/amd64
 # Example: Run pytest on borg 2.0 aarch64 with point release 2.0.0b4 and 8 threads
 make "test(2.0)" PLATFORM=linux/arm64/v8 VERSION=2.0.0b4 XDISTN=8
 ```
