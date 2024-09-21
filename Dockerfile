@@ -35,19 +35,19 @@ FROM ${base_image} as build
 # Install OS build dependencies (https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies) 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
-  apt-get -y -qq update && \ 
-  apt-get -y -qq --no-install-recommends install \
-  build-essential \
-  libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
-  pkg-config \
-  sqv
+	apt-get -y -qq update && \ 
+	apt-get -y -qq --no-install-recommends install \
+	build-essential \
+	libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
+	pkg-config \
+	sqv
 
 # Extract into build layer (verify gpg key)
 ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 WORKDIR ${BORG_SRC_DIR}
 RUN --mount=type=bind,from=source,target=/mnt/source \
-  sqv /mnt/source/borgbackup-${BORG_VERSION}.tar.gz.asc /mnt/source/borgbackup-${BORG_VERSION}.tar.gz --keyring /mnt/source/signing_key.asc && \
-  tar --extract --auto-compress --file=/mnt/source/borgbackup-${BORG_VERSION}.tar.gz --strip-components=1
+	sqv /mnt/source/borgbackup-${BORG_VERSION}.tar.gz.asc /mnt/source/borgbackup-${BORG_VERSION}.tar.gz --keyring /mnt/source/signing_key.asc && \
+	tar --extract --auto-compress --file=/mnt/source/borgbackup-${BORG_VERSION}.tar.gz --strip-components=1
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
@@ -58,24 +58,29 @@ ARG NO_CYTHON_COMPILE=true
 # Borg 1.2.7 depends on Cython==0.29.36 and 'msgpack >=0.5.6, <=1.0.7, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
 # append a pinned msgpack==1.0.5 to development.lock.txt
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-  test "${BORG_VERSION}" != "1.2.7" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
+	test "${BORG_VERSION}" != "1.2.7" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
 
 # Borg 1.2.8 depends on Cython==0.29.37 and 'msgpack >=0.5.6, <=1.0.8, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
 # append a pinned msgpack==1.0.5 to development.lock.txt
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-  test "${BORG_VERSION}" != "1.2.8" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
+	test "${BORG_VERSION}" != "1.2.8" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
+
+# Borg 1.4.0 depends on setuptools==69.0.3 and 'msgpack<=1.1.0,>=1.0.3' but msgpack>=1.1.0 requires setuptools>=69.5.1
+# append a pinned msgpack==1.0.8 to development.lock.txt
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+	test "${BORG_VERSION}" != "1.4.0" || echo "msgpack==1.0.8" >> ${PIP_CONSTRAINT}
 
 WORKDIR ${BORG_WHEEL_DIR}
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-  pip install pkgconfig && \
-  pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile" && \
-  pip wheel ${BORG_SRC_DIR} && \
-  pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
+	pip install pkgconfig && \
+	pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile" && \
+	pip wheel ${BORG_SRC_DIR} && \
+	pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
 
 # Test: Run self-tests
 RUN --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=${BORG_BASE_DIR} \
-  borg --version | grep --silent --fixed-strings "borg ${BORG_VERSION}" && \
-  borg debug info --debug
+	borg --version | grep --silent --fixed-strings "borg ${BORG_VERSION}" && \
+	borg debug info --debug
 
 ### Test stage (pytest) ###
 FROM ${base_image} as test
@@ -83,15 +88,15 @@ ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 
 RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} --mount=type=cache,target=${PIP_CACHE_DIR} \
-  pip install pytest pytest-benchmark pytest-xdist python-dateutil && \
-  pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
+	pip install pytest pytest-benchmark pytest-xdist python-dateutil && \
+	pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: borgbackup==${BORG_VERSION}
 
 ARG XDISTN=auto
 ARG PYTHONFAULTHANDLER=1
 WORKDIR ${BORG_SRC_DIR}
 # Skip readonly tests as CAP_LINUX_IMMUTABLE is disabled by default in Docker
 RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=${BORG_BASE_DIR} \
-  pytest --quiet -n ${XDISTN} --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
+	pytest --quiet -n ${XDISTN} --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
 
 ### Final stage (publish target image) ###
 FROM ${base_image} as final
@@ -100,9 +105,9 @@ ARG base_image
 # Install a ssh client to support remote repositories
 ARG DEBIAN_FRONTEND=noninteractive
 RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
-  apt-get -y -qq update && \ 
-  apt-get -y -qq --no-install-recommends install openssh-client && \
-  ssh -V
+	apt-get -y -qq update && \ 
+	apt-get -y -qq --no-install-recommends install openssh-client && \
+	ssh -V
 
 # Persist ENV into image
 ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
@@ -113,18 +118,18 @@ VOLUME /borg
 # Install the wheel and execute once
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} \
-  pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: --no-compile borgbackup==${BORG_VERSION} && \
-  borg debug info --debug
+	pip install --no-index --no-cache-dir --find-links=${BORG_WHEEL_DIR} --only-binary=:all: --no-compile borgbackup==${BORG_VERSION} && \
+	borg debug info --debug
 
 ENTRYPOINT ["borg"]
 
 # Labeling https://github.com/opencontainers/image-spec/blob/main/annotations.md
 LABEL\
-  org.opencontainers.image.title="BorgBackup" \
-  org.opencontainers.image.description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption." \
-  org.opencontainers.image.licenses="BSD-3-Clause" \
-  org.opencontainers.image.vendor="BorgBackup Community (unofficial)" \
-  org.opencontainers.image.version=${BORG_VERSION} \
-  org.opencontainers.image.source="https://github.com/bbx0/container-borgbackup" \
-  org.opencontainers.image.authors="Philipp Micheel <bbx0+borgbackup at bitdevs dot de>" \
-  org.opencontainers.image.base.name=${base_image}
+	org.opencontainers.image.title="BorgBackup" \
+	org.opencontainers.image.description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption." \
+	org.opencontainers.image.licenses="BSD-3-Clause" \
+	org.opencontainers.image.vendor="BorgBackup Community (unofficial)" \
+	org.opencontainers.image.version=${BORG_VERSION} \
+	org.opencontainers.image.source="https://github.com/bbx0/container-borgbackup" \
+	org.opencontainers.image.authors="Philipp Micheel <bbx0+borgbackup at bitdevs dot de>" \
+	org.opencontainers.image.base.name=${base_image}
