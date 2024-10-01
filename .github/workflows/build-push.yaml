@@ -15,6 +15,10 @@ on:
         description: "The base image to build and publish on."
         type: string
         default: "docker.io/python:3-slim-bookworm"
+      rust_image:
+        description: "The rust image used to build dependencies."
+        type: string
+        default: "docker.io/rust:1-slim-bookworm"
       distroless_image:
         description: "The distroless image to distribute on."
         type: string
@@ -37,6 +41,10 @@ on:
         description: "The base image to build and publish on."
         type: string
         default: "docker.io/python:3-slim-bookworm"
+      rust_image:
+        description: "The rust image used to build dependencies."
+        type: string
+        default: "docker.io/rust:1-slim-bookworm"
       distroless_image:
         description: "The distroless image to distribute on."
         type: string
@@ -121,6 +129,7 @@ jobs:
           build-args: |
             version=${{ env.BORG_VERSION }}
             base_image=${{ inputs.base_image }}
+            rust_image=${{ inputs.rust_image }}
           # Prevent manifest creation instead of an image for a single platform (https://github.com/docker/build-push-action/issues/755)
           provenance: false
       - name: Build and self-test (distroless)

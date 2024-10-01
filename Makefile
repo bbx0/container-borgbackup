@@ -7,14 +7,14 @@
 #		- registry: local registry to push the image to listening at `localhost:5000`
 #   	- buildkit: buildctl is used to compile the image
 #	Build and push:
-#		make "borg(1.4)"
-#		make "distroless(1.4)"
-#		make "borg(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64
+#		make "borg(2.0)"
+#		make "distroless(2.0)"
+#		make "borg(2.0)" VERSION=2.0.0b11 PLATFORM=linux/amd64
 #   Run pytest: 
-#		make "test(1.4)" PLATFORM=linux/amd64
-#		make "test(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64 OPTS="--no-cache"
+#		make "test(2.0)" PLATFORM=linux/amd64
+#		make "test(2.0)" VERSION=2.0.0b11 PLATFORM=linux/amd64 OPTS="--no-cache"
 #   Run self test: 
-#	 	make "distroless-test(1.4)" PLATFORM=linux/amd64
+#	 	make "distroless-test(2.0)" PLATFORM=linux/amd64
 #: }}}
 
 #: General settings {{{
@@ -27,21 +27,16 @@ PUSH			:= true
 #: }}}
 
 #: Borg settings {{{
-borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
-borg(1.1):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
-borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
-borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
-borg(1.4):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
-borg(1.4):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
-borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
+borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.12-slim-bookworm
 borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian12
+borg(2.0):	RUST_IMAGE			:= docker.io/rust:1-slim-bookworm
 
 # Determine latest patch release, when version is not set explicitly
 borg(%):	VERSION				?= $(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==false and .draft==false))|max_by(.published_at).tag_name')
 #: }}}
 
 #: Targets  {{{
-.DEFAULT_GOAL := borg(1.4)
+.DEFAULT_GOAL := borg(2.0)
 # Create multiarch image (Buildkit with Dockerfile frontend)
 borg(%):
 	buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. \
@@ -50,6 +45,7 @@ borg(%):
 	--opt build-arg:base_image=$(BASE_IMAGE) \
 	--opt build-arg:borg_image=$(NAME) \
 	--opt build-arg:distroless_image=$(DISTROLESS_IMAGE) \
+	--opt build-arg:rust_image=$(RUST_IMAGE) \
 	--opt platform=$(PLATFORM) \
 	--opt attest:sbom= \
 	--opt attest:provenance=mode=max \
@@ -61,9 +57,6 @@ distroless(%):		OPTS	+= --opt filename=Dockerfile.distroless
 distroless(%):		borg(%)	;
 
 # Test stages
-test(1.1):			XDISTN	?= 4
-test(1.2):			XDISTN	?= 16
-test(1.4):			XDISTN	?= 16
 test(2.0):			XDISTN	?= 8
 test(%):			OPTS	+= --opt target=test
 test(%):			OPTS	+= --opt build-arg:XDISTN=$(XDISTN)

@@ -1,13 +1,14 @@
 # syntax=docker.io/docker/dockerfile:1
 
 # Usage: 
-#  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:1.1.18,push=true --opt build-arg:version=1.1.18 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
-#  podman build --file Dockerfile --build-arg version=1.1.18 --tag localhost:5000/borgbackup:1.1.18
+#  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:2.0.0b11,push=true --opt build-arg:version=2.0.0b11 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
+#  podman build --file Dockerfile --build-arg version=2.0.0b11 --tag localhost:5000/borgbackup:2.0.0b11
 
 # Default to Debian 12, which is the latest platform for the BorgBackup standalone binary releases
 # the 'offical' python image provides a standalone python build under /usr/local
 # the 'slim' variant comes with pip, setuptools and wheel pre-installed
 ARG base_image=docker.io/python:3-slim-bookworm
+ARG rust_image=docker.io/rust:1-slim-bookworm
 ARG version
 
 # Build environment and defaults
@@ -20,6 +21,8 @@ ARG PIP_CACHE_DIR=/var/local/cache/borg-${BORG_VERSION}/${TARGETARCH}${TARGETVAR
 ARG PIP_CONSTRAINT=${BORG_SRC_DIR}/requirements.d/development.lock.txt
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 ARG PIP_ROOT_USER_ACTION=ignore
+# Defined and provided by the ${rust_image}
+ARG CARGO_HOME=/usr/local/cargo
 
 ### Download source (to cache as layer)
 FROM scratch as source
@@ -29,16 +32,32 @@ ARG BORG_VERSION
 ADD https://github.com/borgbackup/borg/releases/download/${BORG_VERSION}/borgbackup-${BORG_VERSION}.tar.gz borgbackup-${BORG_VERSION}.tar.gz
 ADD https://github.com/borgbackup/borg/releases/download/${BORG_VERSION}/borgbackup-${BORG_VERSION}.tar.gz.asc borgbackup-${BORG_VERSION}.tar.gz.asc
 
-### Build stage ###
-FROM ${base_image} as build
-
-# Install OS build dependencies (https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies) 
+### Base image ###
+# `libsodium` is required for python module `pynacl` a dependency of `cryptography`.
+FROM ${base_image} as base
 ARG DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
-	apt-get -y -qq update && \ 
+ARG TARGETARCH TARGETVARIANT
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache-${TARGETARCH}${TARGETVARIANT} --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETARCH}${TARGETVARIANT} \
+	apt-get -y -qq update && \
+	apt-get -y -qq --no-install-recommends install \
+	libsodium23
+
+### Rust toolchain ###
+# Rust is required since borg 2.0.0b10 to build python module `cryptography`.
+# The rust version provided by Debian is too old.
+FROM ${rust_image} as rust
+
+### Build stage ###
+FROM base as build
+
+# Install OS build dependencies (https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies)
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH TARGETVARIANT
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache-${TARGETARCH}${TARGETVARIANT} --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETARCH}${TARGETVARIANT} \
+	apt-get -y -qq update && \
 	apt-get -y -qq --no-install-recommends install \
 	build-essential \
-	libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
+	libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev libsodium-dev \
 	pkg-config \
 	sqv
 
@@ -49,29 +68,24 @@ RUN --mount=type=bind,from=source,target=/mnt/source \
 	sqv /mnt/source/borgbackup-${BORG_VERSION}.tar.gz.asc /mnt/source/borgbackup-${BORG_VERSION}.tar.gz --keyring /mnt/source/signing_key.asc && \
 	tar --extract --auto-compress --file=/mnt/source/borgbackup-${BORG_VERSION}.tar.gz --strip-components=1
 
+# Rust defaults
+ARG CARGO_HOME
+ENV PATH=${CARGO_HOME}/bin:$PATH
+ARG CARGO_INCREMENTAL=0
+ARG RUSTUP_TOOLCHAIN=stable
+
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 ARG PIP_NO_BINARY=:all:
 ARG PIP_USE_FEATURE=no-binary-enable-wheel-cache
 ARG NO_CYTHON_COMPILE=true
-
-# Borg 1.2.7 depends on Cython==0.29.36 and 'msgpack >=0.5.6, <=1.0.7, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
-# append a pinned msgpack==1.0.5 to development.lock.txt
-RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-	test "${BORG_VERSION}" != "1.2.7" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
-
-# Borg 1.2.8 depends on Cython==0.29.37 and 'msgpack >=0.5.6, <=1.0.8, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
-# append a pinned msgpack==1.0.5 to development.lock.txt
-RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-	test "${BORG_VERSION}" != "1.2.8" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
-
-# Borg 1.4.0 depends on setuptools==69.0.3 and 'msgpack<=1.1.0,>=1.0.3' but msgpack>=1.1.0 requires setuptools>=69.5.1
-# append a pinned msgpack==1.0.8 to development.lock.txt
-RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
-	test "${BORG_VERSION}" != "1.4.0" || echo "msgpack==1.0.8" >> ${PIP_CONSTRAINT}
+ARG SODIUM_INSTALL=system
 
 WORKDIR ${BORG_WHEEL_DIR}
-RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+RUN \
+	--mount=type=cache,target=${PIP_CACHE_DIR} \
+	--mount=type=cache,from=rust,source=${CARGO_HOME},target=${CARGO_HOME},id=cargo-home-borg${BORG_VERSION}-${TARGETARCH}${TARGETVARIANT} \
+	--mount=type=tmpfs,target=/tmp \
 	pip install pkgconfig && \
 	pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile" && \
 	pip wheel ${BORG_SRC_DIR} && \
@@ -83,7 +97,7 @@ RUN --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=${BORG_BASE_DIR} \
 	borg debug info --debug
 
 ### Test stage (pytest) ###
-FROM ${base_image} as test
+FROM base as test
 ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 
@@ -99,7 +113,7 @@ RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} -
 	pytest --quiet -n ${XDISTN} --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
 
 ### Final stage (publish target image) ###
-FROM ${base_image} as final
+FROM base as final
 ARG base_image
 
 # Install a ssh client to support remote repositories
