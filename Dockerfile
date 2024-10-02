@@ -25,7 +25,7 @@ ARG PIP_ROOT_USER_ACTION=ignore
 ARG CARGO_HOME=/usr/local/cargo
 
 ### Download source (to cache as layer)
-FROM scratch as source
+FROM scratch AS source
 # Signing Key: Thomas Waldmann <tw@waldmann-edv.de>
 ADD https://keys.openpgp.org/vks/v1/by-fingerprint/6D5BEF9ADD2075805747B70F9F88FB52FAF7B393 signing_key.asc
 ARG BORG_VERSION
@@ -34,7 +34,7 @@ ADD https://github.com/borgbackup/borg/releases/download/${BORG_VERSION}/borgbac
 
 ### Base image ###
 # `libsodium` is required for python module `pynacl` a dependency of `cryptography`.
-FROM ${base_image} as base
+FROM ${base_image} AS base
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH TARGETVARIANT
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache-${TARGETARCH}${TARGETVARIANT} --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETARCH}${TARGETVARIANT} \
@@ -45,10 +45,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache-${TARGE
 ### Rust toolchain ###
 # Rust is required since borg 2.0.0b10 to build python module `cryptography`.
 # The rust version provided by Debian is too old.
-FROM ${rust_image} as rust
+FROM ${rust_image} AS rust
 
 ### Build stage ###
-FROM base as build
+FROM base AS build
 
 # Install OS build dependencies (https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies)
 ARG DEBIAN_FRONTEND=noninteractive
@@ -97,7 +97,7 @@ RUN --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=${BORG_BASE_DIR} \
 	borg debug info --debug
 
 ### Test stage (pytest) ###
-FROM base as test
+FROM base AS test
 ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 
@@ -113,7 +113,7 @@ RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} -
 	pytest --quiet -n ${XDISTN} --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
 
 ### Final stage (publish target image) ###
-FROM base as final
+FROM base AS final
 ARG base_image
 
 # Install a ssh client to support remote repositories
