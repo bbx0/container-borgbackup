@@ -75,14 +75,14 @@ jobs:
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7
-        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le
-        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x
+      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le
+      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x
       DISTROLESS_IMAGES: >-
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64-distroless
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64-distroless
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7-distroless
-        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le-distroless
-        ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x-distroless
+      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le-distroless
+      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x-distroless
     strategy:
       fail-fast: false
       matrix:
@@ -93,10 +93,10 @@ jobs:
             suffix: -arm64
           - platform: linux/arm/v7
             suffix: -armv7
-          - platform: linux/ppc64le
-            suffix: -ppc64le
-          - platform: linux/s390x
-            suffix: -s390x
+        # - platform: linux/ppc64le
+        #   suffix: -ppc64le
+        # - platform: linux/s390x
+        #   suffix: -s390x
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU

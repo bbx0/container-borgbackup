@@ -22,7 +22,7 @@ SHELL           := /bin/bash
 REGISTRY        ?= localhost:5000
 IMAGE    		?= borgbackup
 NAME			= $(REGISTRY)/$(IMAGE):$(VERSION)
-PLATFORM		?= linux/amd64,linux/arm64/v8,linux/arm/v7,linux/ppc64le,linux/s390x
+PLATFORM		?= linux/amd64,linux/arm64/v8,linux/arm/v7
 PUSH			:= true
 #: }}}
 

@@ -51,7 +51,7 @@ These binaries are added to the distroless base image:
 
 ### Platforms
 
-The container images are built multi-platform for: `linux/amd64`, `linux/arm64`, `linux/arm/v7`, `linux/ppc64le`, `linux/s390x`.
+The container images are built multi-platform for: `linux/amd64`, `linux/arm64`, `linux/arm/v7`.
 
 (There are no specific tests in place to confirm a produced image works well a target platform.)
 
