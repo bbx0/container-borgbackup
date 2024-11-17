@@ -61,7 +61,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BORG_VERSION=$(gh api repos/borgbackup/borg/releases --jq 'map(select(.draft==false and .prerelease==${{ inputs.prerelease }} and (.tag_name | startswith("${{ inputs.borg_version }}"))))|max_by(.published_at).tag_name') &&
+          BORG_VERSION=$(gh api repos/borgbackup/borg/releases --paginate --jq 'map(select(.draft==false and .prerelease==${{ inputs.prerelease }} and (.tag_name | startswith("${{ inputs.borg_version }}"))))|max_by(.published_at).tag_name') &&
           [ -n "${BORG_VERSION}" ] && echo "BORG_VERSION=${BORG_VERSION}" >> $GITHUB_OUTPUT
   build-push:
     name: Build and Push BorgBackup Container Image in GHCR
