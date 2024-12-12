@@ -16,7 +16,6 @@ jobs:
             prerelease: true
             tag_major_minor: true
             base_image: "docker.io/library/python:3.12-slim-bookworm"
-            rust_image: "docker.io/library/rust:1-slim-bookworm"
             distroless_image: "gcr.io/distroless/cc-debian12"
     uses: ./.github/workflows/build-push.yaml
     secrets: inherit
@@ -25,5 +24,4 @@ jobs:
       prerelease: ${{ matrix.prerelease }}
       tag_major_minor: ${{ matrix.tag_major_minor }}
       base_image: ${{ matrix.base_image }}
-      rust_image: ${{ matrix.rust_image }}
       distroless_image: ${{ matrix.distroless_image }}
