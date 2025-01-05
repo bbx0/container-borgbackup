@@ -23,6 +23,10 @@ on:
         description: "Assign {major}.{minor} tags to the image. (e.g. :1.4 or :2.0)"
         type: boolean
         default: true
+      subfolder:
+        description: "Context for the build to locate files."
+        type: string
+        default: "borg1"
   workflow_dispatch:
     inputs:
       borg_version:
@@ -45,7 +49,10 @@ on:
         description: "Assign {major}.{minor} tags to the image. (e.g. :1.4 or :2.0)"
         type: boolean
         default: true
-
+      subfolder:
+        description: "Context for the build to locate files."
+        type: string
+        default: "borg1"
 jobs:
   prepare:
     name: Get BorgBackup target version
@@ -75,14 +82,10 @@ jobs:
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7
-      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le
-      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x
       DISTROLESS_IMAGES: >-
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-amd64-distroless
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-arm64-distroless
         ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-armv7-distroless
-      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-ppc64le-distroless
-      # ${{ env.IMAGE }}:${{ env.BORG_VERSION }}-s390x-distroless
     strategy:
       fail-fast: false
       matrix:
@@ -93,10 +96,6 @@ jobs:
             suffix: -arm64
           - platform: linux/arm/v7
             suffix: -armv7
-        # - platform: linux/ppc64le
-        #   suffix: -ppc64le
-        # - platform: linux/s390x
-        #   suffix: -s390x
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -112,7 +111,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          pull: true
+          context: "{{defaultContext}}:${{ inputs.subfolder }}"
+          pull: true"
           push: true
           tags: "${{ env.IMAGE }}:${{ env.BORG_VERSION }}${{ matrix.suffix }}"
           cache-from: type=gha,scope=borgbackup-${{ env.BORG_VERSION }}${{ matrix.suffix }}
@@ -126,6 +126,7 @@ jobs:
       - name: Build and self-test (distroless)
         uses: docker/build-push-action@v6
         with:
+          context: "{{defaultContext}}:${{ inputs.subfolder }}"
           file: Dockerfile.distroless
           target: test
           pull: true
@@ -144,6 +145,7 @@ jobs:
       - name: Build and push (distroless)
         uses: docker/build-push-action@v6
         with:
+          context: "{{defaultContext}}:${{ inputs.subfolder }}"
           file: Dockerfile.distroless
           pull: true
           push: true
