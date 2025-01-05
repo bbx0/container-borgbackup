@@ -13,24 +13,34 @@ jobs:
       matrix:
         include:
           - version: "1.1"
+            subfolder: "borg1"
             prerelease: false
             tag_major_minor: true
             base_image: "docker.io/library/python:3.9-slim-bullseye"
             distroless_image: "gcr.io/distroless/base-debian11"
           - version: "1.2"
+            subfolder: "borg1"
             prerelease: false
             tag_major_minor: true
             base_image: "docker.io/library/python:3.9-slim-bullseye"
             distroless_image: "gcr.io/distroless/base-debian11"
           - version: "1.4"
+            subfolder: "borg1"
             prerelease: false
             tag_major_minor: true
             base_image: "docker.io/library/python:3.11-slim-bookworm"
             distroless_image: "gcr.io/distroless/base-debian12"
+          - version: "2.0"
+            subfolder: "borg2"
+            prerelease: true
+            tag_major_minor: true
+            base_image: "docker.io/library/python:3.12-slim-bookworm"
+            distroless_image: "gcr.io/distroless/cc-debian12"
     uses: ./.github/workflows/build-push.yaml
     secrets: inherit
     with:
       borg_version: ${{ matrix.version }}
+      subfolder: ${{ matrix.subfolder }}
       prerelease: ${{ matrix.prerelease }}
       tag_major_minor: ${{ matrix.tag_major_minor }}
       base_image: ${{ matrix.base_image }}
