@@ -128,7 +128,7 @@ EOT
 FROM ${base_image} AS final
 ARG \
 	base_image \
-	BORG_BASE_DIR BORG_FUSE_IMPL BORG_VERSION BORG_WHEEL_DIR \
+	BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_WHEEL_DIR BORG_VERSION \
 	DEBIAN_FRONTEND=noninteractive \
 	PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION \
 	RCLONE_CACHE_DIR RCLONE_CONFIG \
@@ -158,7 +158,7 @@ RUN \
 		rclone version
 EOT
 RUN \
-	--mount=type=bind,from=build,source=${BORG_WHEEL_DIR},target=${BORG_WHEEL_DIR} \
+	--mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} \
 	bash -eux -o pipefail <<-'EOT'
 		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: --no-compile borgbackup=="${BORG_VERSION}"
 		borg debug info --debug
