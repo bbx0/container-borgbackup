@@ -50,18 +50,18 @@ borg(%):
 	$(OPTS)
 
 # Distroless variant (needs an already pushed version of borg or fails)
-distroless(%):		SUFFIX	+= -distroless
-distroless(%):		OPTS	+= --opt filename=Dockerfile.distroless
+distroless(%):		SUFFIX	:= -distroless
+distroless(%):		override	OPTS	+= --opt filename=Dockerfile.distroless
 distroless(%):		borg(%)	;
 
 # Test stages
 test(2.0):			XDISTN	?= 8
-test(%):			OPTS	+= --opt target=test
-test(%):			OPTS	+= --opt build-arg:XDISTN=$(XDISTN)
+test(%):			override	OPTS	+= --opt target=test
+test(%):			override	OPTS	+= --opt build-arg:XDISTN=$(XDISTN)
 test(%):			PUSH	:= false
 test(%):			borg(%)	;
 
-distroless-test(%):	OPTS	+= --opt target=test
+distroless-test(%):	override	OPTS	+= --opt target=test
 distroless-test(%):	PUSH	:= false
 distroless-test(%): distroless(%)	;
 
