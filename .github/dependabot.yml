@@ -12,7 +12,9 @@ updates:
   # Enable version updates for Docker
   - package-ecosystem: "docker"
     # Look for a `Dockerfile` in the `root` directory
-    directory: "/"
+    directories:
+      - "/borg1"
+      - "/borg2"
     # Check for updates once a week
     schedule:
       interval: "daily"
