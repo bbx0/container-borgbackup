@@ -1,9 +1,10 @@
 # syntax=docker.io/docker/dockerfile:1
+# check=error=true
 
 # Convert borgbackup container into a "distroless" variant
-ARG version
+ARG version=2.0
 ARG borg_image=ghcr.io/bbx0/borgbackup:${version}
-ARG distroless_image=gcr.io/distroless/base-debian12
+ARG distroless_image=gcr.io/distroless/cc-debian12
 
 ARG BORG_VERSION=${version}
 ARG BORG_BASE_DIR=/borg
@@ -11,76 +12,94 @@ ARG BORG_FUSE_IMPL=none
 ARG PIP_CACHE_DIR=/var/local/cache/borg-${BORG_VERSION}-distroless/${TARGETARCH}${TARGETVARIANT}/pip
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 ARG PIP_ROOT_USER_ACTION=ignore
+ARG RCLONE_CACHE_DIR=/rclone/cache
+ARG RCLONE_CONFIG=/rclone/config/rclone.conf
+
+FROM ${borg_image} AS base
 
 ### Build stage ###
-FROM ${borg_image} as pyinstaller
-
-# Install OS build dependencies 
+FROM base AS pyinstaller
+# Package: BorgBackup with pyinstaller in "one dir" variant (avoids unpacking borg at runtime)
+# - Install OS build dependencies for pyinstaller
+# - enable compiling pyinstaller bootloader from source to support all TARGETARCHs
 ARG DEBIAN_FRONTEND=noninteractive
-RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
-	apt-get -y -qq update && \ 
-	apt-get -y -qq --no-install-recommends install \
-	build-essential zlib1g-dev
-
-# Package: pyinstaller (allow compile from source for support all TARGETARCHs)
 ARG PYINSTALLER_COMPILE_BOOTLOADER=true
 ARG PIP_CACHE_DIR PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
-RUN --mount=type=cache,target=${PIP_CACHE_DIR} \
-	pip install pyinstaller
+RUN \
+	--mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
+	--mount=type=cache,target=${PIP_CACHE_DIR} \
+	bash -eux -o pipefail <<-'EOT'
+		apt-get -y -qq update
+		apt-get -y -qq --no-install-recommends install \
+			build-essential zlib1g-dev
+		pip install pyinstaller
+EOT
 
-# Package: BorgBackup with pyinstaller in "one dir" variant (avoids unpackaging borg at runtime)
 WORKDIR /pyinstaller
-RUN pyinstaller --log-level ERROR --onedir --noupx --noconfirm --clean --name borg.exe --collect-submodules borg --collect-data borg --collect-binaries borg --recursive-copy-metadata borgbackup --hidden-import borghash /usr/local/bin/borg
+# better compression and reproducibility
+ARG PYTHONHASHSEED=1 PYTHONNODEBUGRANGES=1 PYTHONOPTIMIZE=2 SOURCE_DATE_EPOCH=0
+RUN ["pyinstaller","--log-level","ERROR","--onedir","--optimize","2","--noupx","--noconfirm","--clean","--name","borg.exe","--collect-submodules","borg","--collect-data","borg","--collect-binaries","borg","--recursive-copy-metadata","borgbackup","--hidden-import","borghash","/usr/local/bin/borg"]
 
-### dpkg stage: (Download and extract runtime dependencies https://github.com/GoogleContainerTools/distroless/issues/863)
-FROM ${borg_image} as dpkg
+### dpkg stage ###
+# - Download and extract Debian runtime dependencies https://github.com/GoogleContainerTools/distroless/issues/863
+FROM base AS dpkg
 ARG DPKG_PYINSTALLER="zlib1g"
 ARG DPKG_OPENSSH="openssh-client zlib1g libselinux1 libgssapi-krb5-2 libpcre2-8-0 libkrb5-3 libk5crypto3 libcom-err2 libkrb5support0 libkeyutils1"
 ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /var/cache/apt/archives
 RUN --mount=type=tmpfs,target=/var/cache/apt --mount=type=tmpfs,target=/var/lib/apt \
-	apt-get -y -qq update && \ 
-	apt-get -y -qq --download-only --no-install-recommends --reinstall install ${DPKG_PYINSTALLER} ${DPKG_OPENSSH} && \
-	mkdir -p /dpkg/var/lib/dpkg/status.d && \
-	for deb in *.deb; do \
-	package_name=$(dpkg-deb -I ${deb} | awk '/^ Package: .*$/ {print $2}'); \
-	dpkg --ctrl-tarfile $deb | tar -Oxf - ./control > /dpkg/var/lib/dpkg/status.d/${package_name}; \
-	dpkg --extract $deb /dpkg || exit 10; \
-	done
+	bash -eux -o pipefail <<-'EOT'
+		apt-get -y -qq update
+		apt-get -y -qq --download-only --no-install-recommends --reinstall install ${DPKG_PYINSTALLER} ${DPKG_OPENSSH}
+		mkdir -p /dpkg/var/lib/dpkg/status.d
+		for deb in *.deb; do
+			package_name=$(dpkg-deb -I "${deb}" | awk '/^ Package: .*$/ {print $2}')
+			dpkg --ctrl-tarfile "${deb}" | tar -Oxf - ./control > "/dpkg/var/lib/dpkg/status.d/${package_name}"
+			dpkg --extract "${deb}" /dpkg
+		done
+EOT
 
 ### rootfs stage (squash everything into one layer) ####
-FROM scratch as rootfs
-COPY --from=pyinstaller ["/pyinstaller/dist/borg.exe","/opt/borg"]
+FROM scratch AS rootfs
+ARG RCLONE_CONFIG
 COPY --from=dpkg ["/dpkg","/"]
-COPY --from=dpkg ["/bin/cat","/bin/cat"]
+COPY --from=base ["/usr/bin/cat","/usr/bin/sleep","/usr/bin/rclone","/usr/local/bin/"]
+COPY --from=base ["${RCLONE_CONFIG}","${RCLONE_CONFIG}"]
+COPY --from=pyinstaller ["/pyinstaller/dist/borg.exe","/opt/borg"]
+RUN --mount=type=bind,from=docker.io/busybox:stable-musl,source=/bin/ln,target=/usr/local/bin/ln ["ln", "-s", "/opt/borg/borg.exe", "/usr/local/bin/borg"]
 
-### test stage (check that the binaries execute) ####
+### test stage (check that the binaries execute) ###
 FROM ${distroless_image} AS test
 COPY --from=rootfs ["/","/"]
+RUN ["borg", "debug", "info", "--debug"]
+RUN ["cat", "--version"]
+RUN ["rclone", "version"]
 RUN ["ssh", "-V"]
-RUN ["/opt/borg/borg.exe", "debug", "info", "--debug"]
-RUN ["/bin/cat", "--version"]
 
-# Final stage (publish target image)
+### Final stage (publish target image) ###
 FROM ${distroless_image} AS final
-ARG distroless_image
-
-# Persist ENV into image
-ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_VERSION
-ENV BORG_BASE_DIR=${BORG_BASE_DIR} BORG_FUSE_IMPL=${BORG_FUSE_IMPL} BORG_VERSION=${BORG_VERSION} PYTHONUNBUFFERED=1
-VOLUME /borg
+ARG \
+	distroless_image \
+	BORG_BASE_DIR BORG_FUSE_IMPL BORG_VERSION \
+	RCLONE_CACHE_DIR RCLONE_CONFIG
+ENV \
+	BORG_BASE_DIR=${BORG_BASE_DIR} \
+	BORG_FUSE_IMPL=${BORG_FUSE_IMPL} \
+	BORG_VERSION=${BORG_VERSION} \
+	PYTHONUNBUFFERED=1 \
+	RCLONE_CONFIG=${RCLONE_CONFIG} \
+	RCLONE_CACHE_DIR=${RCLONE_CACHE_DIR}
 
 COPY --from=rootfs ["/","/"]
+VOLUME ["${BORG_BASE_DIR}"]
+ENTRYPOINT ["/usr/local/bin/borg"]
 
-ENTRYPOINT ["/opt/borg/borg.exe"]
-
-# Labeling https://github.com/opencontainers/image-spec/blob/main/annotations.md
-LABEL\
-	org.opencontainers.image.title="BorgBackup" \
-	org.opencontainers.image.description="BorgBackup is a deduplicating backup program with support for compression and authenticated encryption." \
-	org.opencontainers.image.licenses="BSD-3-Clause" \
-	org.opencontainers.image.vendor="BorgBackup Community (unofficial)" \
-	org.opencontainers.image.version=${BORG_VERSION} \
-	org.opencontainers.image.source="https://github.com/bbx0/container-borgbackup" \
-	org.opencontainers.image.authors="39773919+bbx0@users.noreply.github.com" \
-	org.opencontainers.image.base.name=${distroless_image}
+LABEL \
+	org.opencontainers.image.title='BorgBackup' \
+	org.opencontainers.image.description='BorgBackup is a deduplicating backup program with support for compression and authenticated encryption.' \
+	org.opencontainers.image.licenses='BSD-3-Clause' \
+	org.opencontainers.image.vendor='BorgBackup Community (unofficial)' \
+	org.opencontainers.image.version="${BORG_VERSION}" \
+	org.opencontainers.image.source='https://github.com/bbx0/container-borgbackup' \
+	org.opencontainers.image.authors='Philipp Micheel <bbx0+borgbackup at bitdevs dot de>' \
+	org.opencontainers.image.base.name="${distroless_image}"
