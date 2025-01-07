@@ -1,140 +1,93 @@
+<!-- markdownlint-configure-file { "no-inline-html": { "allowed_elements": [ "br" ] } } -->
+
 # BorgBackup container
 
-Distribution of [BorgBackup](https://www.borgbackup.org/) in a docker container. A SSH client is provided within in the image to allow backup to a remote storage.
+[![docker](https://img.shields.io/badge/Docker%20Hub-1D63ED?logo=docker&logoColor=white)](https://hub.docker.com/r/bbx0/borgbackup)
+[![GitHub](https://img.shields.io/badge/GitHub-black?logo=github&logoColor=white)](https://github.com/bbx0/container-borgbackup)
 
-- GitHub: [bbx0/container-borgbackup](https://github.com/bbx0/container-borgbackup): [Dockerfile](https://github.com/bbx0/container-borgbackup/blob/main/Dockerfile), [Dockerfile.distroless](https://github.com/bbx0/container-borgbackup/blob/main/Dockerfile.distroless)
-- Docker Hub: [bbx0/borgbackup](https://hub.docker.com/r/bbx0/borgbackup)
+A distribution of [BorgBackup](https://www.borgbackup.org/) based on the [Docker Official Images](https://github.com/docker-library/official-images#what-are-official-images) for [Python](https://hub.docker.com/_/python). An SSH client and [rclone](https://rclone.org) (borg2 only) are available for backing up to remote storage.
 
-This is an unofficial community contribution.
+The container image is suitable as a backup client and as a base image for other projects.
 
-## Quick start
+This is a [Borg Community](https://github.com/borgbackup/community) user contribution.
 
-```bash
-# BorgBackup requires a persistent internal data volume `/borg` in addition to any repo or source volumes.
-docker run --rm -v borg:/borg bbx0/borgbackup:1.4 --help
-podman run --rm -v borg:/borg ghcr.io/bbx0/borgbackup:1.4 --help
-```
+## Shared Tags
 
-## Tags and Variants
+The [supported](https://github.com/borgbackup/borg/blob/master/SECURITY.md) BorgBackup versions are continuously built and published as shared tag based on a [GitHub workflow](https://github.com/bbx0/container-borgbackup/actions/workflows/main.yaml).
 
-The latest patch release of all [supported](https://github.com/borgbackup/borg/blob/master/SECURITY.md) BorgBackup versions are continuously build and published here as container. The shared tags below always link to the latest point release.
+| Tag                                                                                                                                                                                                                                        | Comment                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| [ghcr.io/bbx0/borgbackup:2.0](https://github.com/bbx0/container-borgbackup/blob/main/borg2/Dockerfile)<br>[ghcr.io/bbx0/borgbackup:2.0-distroless](https://github.com/bbx0/container-borgbackup/blob/main/borg2/Dockerfile.distroless)     | beta for *testing* the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases               |
+| **[ghcr.io/bbx0/borgbackup:1.4](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile)**<br>[ghcr.io/bbx0/borgbackup:1.4-distroless](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile.distroless) | **stable series**                                                                                         |
+| [ghcr.io/bbx0/borgbackup:1.2](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile)<br>[ghcr.io/bbx0/borgbackup:1.2-distroless](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile.distroless)     | supported series                                                                                          |
+| [ghcr.io/bbx0/borgbackup:1.1](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile)<br>[ghcr.io/bbx0/borgbackup:1.1-distroless](https://github.com/bbx0/container-borgbackup/blob/main/borg1/Dockerfile.distroless)     | [EOL, please upgrade](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
 
-You have to manage any [`borg upgrade`](https://borgbackup.readthedocs.io/en/stable/usage/upgrade.html#when-you-do-not-need-borg-upgrade) yourself. Please always read the BorgBackup [Change Log](https://borgbackup.readthedocs.io/en/stable/changes.html#change-log) before switching to a new version tag.
-
-| Tag                             | Base image                          | Comment                                                                                                            |
-| ------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ghcr.io/bbx0/borgbackup:1.1     | docker.io/python:3.9-slim-bullseye  | [EOL, please upgrade to 1.2 or 1.4 series](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
-| ghcr.io/bbx0/borgbackup:1.2     | docker.io/python:3.9-slim-bullseye  | maintained series                                                                                                  |
-| **ghcr.io/bbx0/borgbackup:1.4** | docker.io/python:3.11-slim-bookworm | **stable series**                                                                                                  |
-| ghcr.io/bbx0/borgbackup:2.0     | docker.io/python:3.11-slim-bookworm | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
-
-All images are continuously published based on a [GitHub workflow](https://github.com/bbx0/container-borgbackup/actions/workflows/main.yaml) without human intervention. Make sure to validate the images in your test environment before usage, as you always do. 😉
-
-There is *no* `:latest` tag to reduce any risk of breaking repository data.
-
-### Variant `-distroless`
-
-A ”[distroless](https://github.com/GoogleContainerTools/distroless)” variant is published with suffix `-distroless`. This variant is based on [pyinstaller](https://pyinstaller.org) and Googles distroless [base image](https://github.com/GoogleContainerTools/distroless#docker) to package BorgBackup as a binary and to provide glibc.
-
-| Tag                                    | Base image                      | Comment                                                                                                            |
-| -------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ghcr.io/bbx0/borgbackup:1.1-distroless | gcr.io/distroless/base-debian11 | [EOL, please upgrade to 1.2 or 1.4 series](https://github.com/borgbackup/borg/commit/d07e28db7b63df38fbe1c9987898d0d26f3264ff) |
-| ghcr.io/bbx0/borgbackup:1.2-distroless | gcr.io/distroless/base-debian11 | maintained series                                                                                                  |
-| ghcr.io/bbx0/borgbackup:1.4-distroless | gcr.io/distroless/base-debian12 | **stable series**                                                                                                  |
-| ghcr.io/bbx0/borgbackup:2.0-distroless | gcr.io/distroless/cc-debian12   | only for ***testing*** the [2.0.x](https://github.com/borgbackup/borg/issues/6602) pre-releases                    |
-
-These binaries are added to the distroless base image:
-
-- `borg`: BorgBackup (packed with pyinstaller)
-- `ssh`: complete `openssh-client` package from Debian repository
-- `cat`: for use with `BORG_PASSCOMMAND` (part of coreutils package from Debian repository)
-
-### Platforms
+You have to manage any [`borg upgrade`](https://borgbackup.readthedocs.io/en/stable/usage/upgrade.html#when-you-do-not-need-borg-upgrade) yourself. Please always read the BorgBackup [Change Log](https://borgbackup.readthedocs.io/en/stable/changes.html#change-log) before switching to a new version tag. There is no `:latest` tag to help reduce the risk of breaking repository data.
 
 The container images are built multi-platform for: `linux/amd64`, `linux/arm64`, `linux/arm/v7`.
 
-(There are no specific tests in place to confirm a produced image works well a target platform.)
+The [`-distroless`](https://github.com/GoogleContainerTools/distroless) variant is based on Googles [distroless images](https://github.com/GoogleContainerTools/distroless#distroless-container-images) and contains binaries for `borg`, `cat`, `rclone` (borg2 only) and `ssh`.
 
 ## Usage
 
-BorgBackup allows configuration via [environment variables][1], which is the recommended approach for this container.
+### Quick start
 
-Some environment variables are pre-configured with a default.
+A simple example with an SSH repository URL.
 
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable MD033 -->
-| Environment Variable | Default | Comment                                                                                                                                                                                                                                                                                                                          |
-| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BORG_BASE_DIR`      | `/borg` | The mount point `/borg` is defined as volume in the container. <br /> You must keep it on permanent storage to allow BorgBackup to maintain its internal configuration and cache.                                                                                                                                                |
-| `BORG_FUSE_IMPL`     | `none`  | BorgBackup is compiled without FUSE support. Please create an issue explaining your use case if you need this.                                                                                                                                                                                                                   |
-| `BORG_REPO`          |         | Set to your remote location via `ssh://..` or a mounted remote storage.                                                                                                                                                                                                                                                          |
-| `BORG_RSH`           |         | Optional: Provide your ssh configuration and make use of a mounted secret to provide the private key. <br /> Example: `--secret=id_private.key,type=mount,mode=0400` <br /> `--env=BORG_RSH="ssh -i /run/secrets/id_private.key -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"` |
-| `BORG_PASSPHRASE`    |         | Optional: Use a container secret to provide the passphrase. <br /> Example: `--secret=BORG_PASSPHRASE,type=env`                                                                                                                                                                                                                  |
-| `BORG_PASSCOMMAND`   |         | Optional: You can provide a container secret as mount and use `cat` to consume it. <br /> Example: `--secret=BORG_PASSPHRASE,type=mount --env=BORG_PASSCOMMAND="cat /run/secrets/BORG_PASSPHRASE"`                                                                                                                               |
-| `BORG_KEY_FILE`      |         | Optional: Use a container secret to provide a pre-generated key file. <br /> Example: `--secret=BORG_KEY_FILE,type=mount --env=BORG_KEY_FILE="/run/secrets/BORG_KEY_FILE"`                                                                                                                                                       |
-| `BORG_HOST_ID`       |         | Optional: For ephemeral containers you need to provide a static identifier to allow automatic stale lock removal. Must be a globally unique id for the container. <br /> Please check the [documentation][1]. <br /> Example: `--env=BORG_HOST_ID="borgbackup-XYZ@$(hostname --fqdn)"`                                           |
-<!-- markdownlint-restore -->
+```yaml
+# docker-compose.yaml
+name: backup
+services:
+  borg:
+    image: bbx0/borgbackup:1.4
+    read_only: true
+    environment:
+      BORG_PASSPHRASE: mysecret
+      BORG_REPO: ssh://user@example.com:22/./repos/myrepo
+      BORG_RSH: ssh -i /run/secrets/borg.sshkey -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR
+      BORG_HOST_ID: mycontainer-quickstart-2f1c4b@example.net
+    working_dir: /mnt/src
+    volumes:
+      - borg:/borg # BorgBackup requires a persistent internal volume `/borg` for data and cache
+      - ./borg.sshkey:/run/secrets/borg.sshkey:ro # an existing ssh private key file
+      - ./mydata:/mnt/src/mydata:ro,z # the source data to backup mounted under the `working_dir`
+volumes:
+  borg:
+```
+
+```bash
+docker-compose run --rm borg init --encryption=repokey
+docker-compose run --rm borg create ::{now} mydata # source data relative to the `working_dir`
+docker-compose run --rm borg info
+docker-compose run --rm borg list ::
+```
+
+### Configuration
+
+BorgBackup allows configuration via [environment variables](https://borgbackup.readthedocs.io/en/stable/usage/general.html#environment-variables), which is the recommended approach for this container. Some environment variables are pre-configured with a default. Options for borg2 are experimental and may change without prior notice.
+
+| Environment Variable          | Default                      | Comment                                                                                                                                                                                                                     |
+| ----------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BORG_BASE_DIR`               | `/borg`                      | The mount point `/borg` is defined as volume in the container.<br>You must keep it on permanent storage to allow BorgBackup to maintain its internal configuration and cache.                                               |
+| `BORG_REPO`                   |                              | Set it to your [repository URL](https://borgbackup.readthedocs.io/en/stable/usage/general.html#repository-urls) or a mounted volume.                                                                                        |
+| `BORG_PASSPHRASE`             |                              | Optional: The passphrase for an encrypted repository.                                                                                                                                                                       |
+| `BORG_PASSCOMMAND`            |                              | Optional: You can provide the passphrase as a mounted file and use `cat` to consume it.<br>Example: `BORG_PASSCOMMAND: cat /run/secrets/passphrase`                                                                         |
+| `BORG_RSH`                    |                              | Optional: Provide your ssh key and configuration options.                                                                                                                                                                   |
+| `BORG_HOST_ID`                |                              | For ephemeral containers you need to provide a static identifier to allow automatic stale lock removal. Must be a persistent unique ID for the container.<br>Example: `BORG_HOST_ID: mycontainer-uniqueid@host.example.com` |
+| `BORG_FUSE_IMPL`              | `none`                       | BorgBackup is compiled without FUSE support. Please create an issue explaining your use case if you need this.                                                                                                              |
+| **borg2 only (experimental)** |                              |                                                                                                                                                                                                                             |
+| `RCLONE_CONFIG`               | `/rclone/config/rclone.conf` | Optional: The mount point for a `rclone` configuration file.                                                                                                                                                                |
+| `RCLONE_CONFIG_*`             |                              | Optional: You can provide `rclone` configuration options as environment variables instead of a configuration file.                                                                                                          |
+| `RCLONE_CACHE_DIR`            | `/rclone/cache`              | Optional: The mount point for a persistent `rclone` cache directory. Usually this is not needed.                                                                                                                            |
 
 Please check the BorgBackup documentation for all available [environment variables](https://borgbackup.readthedocs.io/en/stable/usage/general.html#environment-variables).
 
 ### Recommendations
 
-- Use `--security-opt label=disable` to prevent filesystem relabeling when backing up or restoring to a local filesystem with `selinux` enabled.
-- Use a ephemeral container (`--rm`). There is no need to keep the container after command execution when `/borg` is provided as a persistent volume (and the `BORG_HOST_ID` is set).
-- Use a read-only container (`--read-only`). The container will never require write access to its own rootfs.
-- Do *not* provide any ssh configuration in `/root/.ssh`. Use a mounted secret to provide the key file via the `-i` flag and use the `-o` flag to provide any config options in `BORG_RSH`.
-  - Mount config files to `/etc/ssh/ssh_config` or `/etc/ssh/ssh_known_hosts` as needed.
+- Use `--security-opt label=disable` to prevent file system relabeling when backing up or restoring to a local file system with `selinux` enabled.
+- Use an ephemeral container (`--rm`). There is no need to keep the container after command execution when `/borg` is provided as a persistent volume and the `BORG_HOST_ID` is set.
+- Use a read-only container (`--read-only`). The container will not require write access to its own rootfs.
+- Do *not* provide any ssh configuration in `/root/.ssh`. Use a mounted secret to provide the key file via the `-i` flag and use the `-o` flag to provide any config options in `BORG_RSH`. You can mount config files to `/etc/ssh/ssh_config` or `/etc/ssh/ssh_known_hosts`.
 - Make use of the *native* scheduler of your hosting environment to trigger backups. A systemd.timer or Kubernetes CronJobs should be at your disposal. This allows to control any start/stop dependencies via the container runtime directly.
 
-### Example
-
-See [`docs/`](https://github.com/bbx0/container-borgbackup/tree/main/docs) for examples (e.g. with [`caddy`](https://github.com/bbx0/container-borgbackup/blob/main/docs/example-caddy.md)).
-
-```bash
-podman run --name borg --rm --read-only --volume borg:/borg ghcr.io/bbx0/borgbackup:1.4 <command>
-```
-
-## Building
-
-For local builds take a look at the [`Makefile`](https://github.com/bbx0/container-borgbackup/blob/main/Makefile) or the workflow ([main.yaml](https://github.com/bbx0/container-borgbackup/blob/main/.github/workflows/main.yaml), [build-push.yaml](https://github.com/bbx0/container-borgbackup/blob/main/.github/workflows/build-push.yaml)).
-
-### Build Examples
-
-```sh
-# Build via podman / docker
-podman build \
-    --file Dockerfile \
-    --tag localhost:5000/borgbackup:1.4.0
-    --build-arg version=1.4.0 \
-    --build-arg base_image=docker.io/python:3.11-slim-bookworm
-
-podman build \
-    --file Dockerfile.distroless \
-    --tag localhost:5000/borgbackup:1.4.0-distroless
-    --build-arg version=1.4.0 \
-    --build-arg borg_image=localhost:5000/borgbackup:1.4.0 \
-    --build-arg distroless_image=gcr.io/distroless/base-debian12
-```
-
-### Test builds
-
-Running the BorgBackup `pytest` suite is supported. The Dockerfile contains a `test` target, which executes `pytest` on the given borg version. The build-arg `XDISTN` controls parallelization (see [`Makefile`](https://github.com/bbx0/container-borgbackup/blob/main/Makefile)). All readonly tests are skipped as `CAP_LINUX_IMMUTABLE` is disabled by default in Docker.
-
-```bash
-# Example: Run pytest on borg 1.4 x86_64
-make "test(1.4)" PLATFORM=linux/amd64
-# Example: Run pytest on borg 2.0 aarch64 with point release 2.0.0b4 and 8 threads
-make "test(2.0)" PLATFORM=linux/arm64/v8 VERSION=2.0.0b4 XDISTN=8
-```
-
-## Alternatives
-
-Some other valuable projects to check-out as an alternative in case you find anything missing here.
-
-- [borg binary builder](https://gitlab.com/borg-binary-builder/borg-binaries) / [Borg ARM builds](https://borg.bauerj.eu): standalone builds for ARM using Docker (but not published as container image)
-- [borgmatic-collective/docker-borgmatic](https://github.com/borgmatic-collective/docker-borgmatic):  Docker container for [Borgmatic](https://github.com/borgmatic-collective/borgmatic) based on Alpine
-  - [modem7/docker-borgmatic](https://github.com/modem7/docker-borgmatic): Multiarch builds of the borgmatic container
-- [pschiffe/docker-borg](https://github.com/pschiffe/docker-borg): Docker image with builtin sshfs support based on Fedora.
-- [azlux/borgbackup-docker](https://github.com/azlux/borgbackup-docker): Docker image with a builtin mysql backup feature based on Debian.
-
-[1]: https://borgbackup.readthedocs.io/en/stable/usage/general.html#environment-variables
+See [`docs/`](https://github.com/bbx0/container-borgbackup/tree/main/docs) for more examples (e.g. with [`caddy`](https://github.com/bbx0/container-borgbackup/blob/main/docs/example-caddy.md)).
