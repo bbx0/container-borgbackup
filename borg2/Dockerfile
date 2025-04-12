@@ -93,6 +93,14 @@ RUN \
 	--mount=type=cache,target=${PIP_CACHE_DIR} \
 	--mount=type=tmpfs,target=/tmp \
 	bash -eux -o pipefail <<-'EOT'
+
+		# Borg 2.0.0b14 requires setuptools==75.1.0. Constrain packages requiring setuptools>=77.0.1 to the last compatible version.
+		[ "${BORG_VERSION}" != "2.0.0b14" ] || {
+			echo "calver<=2025.03.31" 
+			echo "types-psutil<=6.1.0.20241221"
+		} >> ${PIP_CONSTRAINT}
+	
+		# Build and install
 		pip install pkgconfig
 		pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile"
 		pip wheel "${BORG_SRC_DIR}"
