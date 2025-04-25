@@ -37,8 +37,8 @@ EOT
 
 WORKDIR /pyinstaller
 # better compression and reproducibility
-ARG PYTHONHASHSEED=1 PYTHONNODEBUGRANGES=1 PYTHONOPTIMIZE=2 SOURCE_DATE_EPOCH=0
-RUN ["pyinstaller","--log-level","ERROR","--onedir","--optimize","2","--noupx","--noconfirm","--clean","--name","borg.exe","--collect-submodules","borg","--collect-data","borg","--collect-binaries","borg","--recursive-copy-metadata","borgbackup","--hidden-import","borghash","/usr/local/bin/borg"]
+ARG PYTHONHASHSEED=1 PYTHONNODEBUGRANGES=1 SOURCE_DATE_EPOCH=0
+RUN ["pyinstaller","--log-level","ERROR","--onedir","--noupx","--noconfirm","--clean","--name","borg.exe","--collect-submodules","borg","--collect-data","borg","--collect-binaries","borg","--recursive-copy-metadata","borgbackup","--hidden-import","borghash","/usr/local/bin/borg"]
 
 ### dpkg stage ###
 # - Download and extract Debian runtime dependencies https://github.com/GoogleContainerTools/distroless/issues/863
