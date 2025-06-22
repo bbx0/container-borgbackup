@@ -94,6 +94,10 @@ RUN \
 	--mount=type=tmpfs,target=/tmp \
 	bash -eux -o pipefail <<-'EOT'
 
+		# We pin the development.lock.txt as a constraints file but it is requirements file.
+		# Constraints cannot have extras.
+		sed -i 's/\[[^][]*\]//' ${PIP_CONSTRAINT}
+
 		# Borg 2.0.0b14 requires setuptools==75.1.0. Constrain packages requiring setuptools>=77.0.1 to the last compatible version.
 		[ "${BORG_VERSION}" != "2.0.0b14" ] || {
 			echo "calver<=2025.03.31" 
