@@ -65,6 +65,11 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
 	test "${BORG_VERSION}" != "1.2.8" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
 
+# Borg 1.2.9 depends on Cython==0.29.37 and 'msgpack >=0.5.6, <=1.1.1, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
+# append a pinned msgpack==1.0.5 to development.lock.txt
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+	test "${BORG_VERSION}" != "1.2.9" || echo "msgpack==1.0.5" >> ${PIP_CONSTRAINT}
+
 # Borg 1.4.0 depends on setuptools==69.0.3 and 'msgpack<=1.1.0,>=1.0.3' but msgpack>=1.1.0 requires setuptools>=69.5.1
 # append a pinned msgpack==1.0.8 to development.lock.txt
 RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
