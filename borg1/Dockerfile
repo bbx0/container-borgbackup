@@ -1,4 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1
+# check=error=false
 
 # Usage: 
 #  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:1.1.18,push=true --opt build-arg:version=1.1.18 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
@@ -22,7 +23,7 @@ ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 ARG PIP_ROOT_USER_ACTION=ignore
 
 ### Download source (to cache as layer)
-FROM scratch as source
+FROM scratch AS source
 # Signing Key: Thomas Waldmann <tw@waldmann-edv.de>
 ADD https://keys.openpgp.org/vks/v1/by-fingerprint/6D5BEF9ADD2075805747B70F9F88FB52FAF7B393 signing_key.asc
 ARG BORG_VERSION
@@ -30,7 +31,7 @@ ADD https://github.com/borgbackup/borg/releases/download/${BORG_VERSION}/borgbac
 ADD https://github.com/borgbackup/borg/releases/download/${BORG_VERSION}/borgbackup-${BORG_VERSION}.tar.gz.asc borgbackup-${BORG_VERSION}.tar.gz.asc
 
 ### Build stage ###
-FROM ${base_image} as build
+FROM ${base_image} AS build
 
 # Install OS build dependencies (https://borgbackup.readthedocs.io/en/stable/installation.html#dependencies) 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -54,6 +55,11 @@ ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACT
 ARG PIP_NO_BINARY=:all:
 ARG PIP_USE_FEATURE=no-binary-enable-wheel-cache
 ARG NO_CYTHON_COMPILE=true
+
+# We pin the development.lock.txt as a constraints file but it is a requirements file.
+# Constraints cannot have extras.
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} --mount=type=tmpfs,target=/tmp \
+	sed -i 's/\[[^][]*\]//' ${PIP_CONSTRAINT}
 
 # Borg 1.2.7 depends on Cython==0.29.36 and 'msgpack >=0.5.6, <=1.0.7, !=1.0.1' but msgpack=>1.0.6 requires Cython~=3.0.0 
 # append a pinned msgpack==1.0.5 to development.lock.txt
@@ -88,7 +94,7 @@ RUN --mount=type=tmpfs,target=/tmp --mount=type=tmpfs,target=${BORG_BASE_DIR} \
 	borg debug info --debug
 
 ### Test stage (pytest) ###
-FROM ${base_image} as test
+FROM ${base_image} AS test
 ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 
@@ -104,7 +110,7 @@ RUN --mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} -
 	pytest --quiet -n ${XDISTN} --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
 
 ### Final stage (publish target image) ###
-FROM ${base_image} as final
+FROM ${base_image} AS final
 ARG base_image
 
 # Install a ssh client to support remote repositories
