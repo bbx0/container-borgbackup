@@ -104,6 +104,11 @@ RUN \
 			echo "types-psutil<=6.1.0.20241221"
 		} >> ${PIP_CONSTRAINT}
 	
+		# Borg 2.0.0b20 requires setuptools==78.1.1. Constrain packages requiring setuptools>=80.9.0 to the last compatible version.
+		[ "${BORG_VERSION}" != "2.0.0b20" ] || {
+			echo "msgpack<=1.1.1"
+		} >> ${PIP_CONSTRAINT}
+
 		# Build and install
 		pip install pkgconfig
 		pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile"
