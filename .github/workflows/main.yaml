@@ -16,14 +16,14 @@ jobs:
             subfolder: "borg1"
             prerelease: false
             tag_major_minor: true
-            base_image: "docker.io/library/python:3.9-slim-bullseye"
-            distroless_image: "gcr.io/distroless/base-debian11"
+            base_image: "docker.io/library/python:3.10-slim-bookworm"
+            distroless_image: "gcr.io/distroless/base-debian12"
           - version: "1.2"
             subfolder: "borg1"
             prerelease: false
             tag_major_minor: true
-            base_image: "docker.io/library/python:3.9-slim-bullseye"
-            distroless_image: "gcr.io/distroless/base-debian11"
+            base_image: "docker.io/library/python:3.11-slim-bookworm"
+            distroless_image: "gcr.io/distroless/base-debian12"
           - version: "1.4"
             subfolder: "borg1"
             prerelease: false

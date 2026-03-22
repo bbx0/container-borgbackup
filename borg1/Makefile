@@ -9,10 +9,8 @@
 #	Build and push:
 #		make "borg(1.4)"
 #		make "distroless(1.4)"
-#		make "borg(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64
 #   Run pytest: 
 #		make "test(1.4)" PLATFORM=linux/amd64
-#		make "test(2.0)" VERSION=2.0.0b4 PLATFORM=linux/amd64 OPTS="--no-cache"
 #   Run self test: 
 #	 	make "distroless-test(1.4)" PLATFORM=linux/amd64
 #: }}}
@@ -27,17 +25,15 @@ PUSH			:= true
 #: }}}
 
 #: Borg settings {{{
-borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
-borg(1.1):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
-borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.9-slim-bullseye
-borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian11
+borg(1.1):	BASE_IMAGE			:= docker.io/library/python:3.10-slim-bookworm
+borg(1.1):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
+borg(1.2):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
+borg(1.2):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
 borg(1.4):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
 borg(1.4):	DISTROLESS_IMAGE	:= gcr.io/distroless/base-debian12
-borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.11-slim-bookworm
-borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian12
 
 # Determine latest patch release, when version is not set explicitly
-borg(%):	VERSION				?= $(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==false and .draft==false))|max_by(.published_at).tag_name')
+borg(%):	VERSION				?= $(shell gh api repos/borgbackup/borg/releases --paginate --jq 'map(select(.draft==false and .prerelease==false and (.tag_name | startswith("$(%)"))))|max_by(.published_at).tag_name')
 #: }}}
 
 #: Targets  {{{
@@ -64,7 +60,6 @@ distroless(%):		borg(%)	;
 test(1.1):			XDISTN	?= 4
 test(1.2):			XDISTN	?= 16
 test(1.4):			XDISTN	?= 16
-test(2.0):			XDISTN	?= 8
 test(%):			OPTS	+= --opt target=test
 test(%):			OPTS	+= --opt build-arg:XDISTN=$(XDISTN)
 test(%):			PUSH	:= false
