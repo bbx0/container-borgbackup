@@ -13,6 +13,9 @@ ARG base_image=docker.io/python:3.14-slim-trixie
 ARG rclone_image=docker.io/rclone/rclone:1
 ARG version
 
+# starting 2.0.0b21 are the borgstore backends optional extras
+ARG BORG_EXTRAS=[rclone]
+
 ARG BORG_BASE_DIR=/borg
 ARG BORG_FUSE_IMPL=none
 ARG BORG_VERSION=${version}
@@ -75,7 +78,7 @@ RUN \
 EOT
 
 # Extract into build layer (verify gpg key)
-ARG BORG_BASE_DIR BORG_FUSE_IMPL BORG_VERSION BORG_SRC_DIR BORG_WHEEL_DIR
+ARG BORG_BASE_DIR BORG_EXTRAS BORG_FUSE_IMPL BORG_VERSION BORG_SRC_DIR BORG_WHEEL_DIR
 WORKDIR ${BORG_SRC_DIR}
 RUN --mount=type=bind,from=source,target=/mnt/source \
 	bash -eux -o pipefail <<-'EOT'
@@ -112,8 +115,8 @@ RUN \
 		# Build and install
 		pip install pkgconfig
 		pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile"
-		pip wheel "${BORG_SRC_DIR}"
-		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: borgbackup=="${BORG_VERSION}"
+		pip wheel "${BORG_SRC_DIR}${BORG_EXTRAS}"
+		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: "borgbackup${BORG_EXTRAS}==${BORG_VERSION}"
 		
 		# Test: Run self-tests
 		borg --version | grep --silent --fixed-strings "borg ${BORG_VERSION}"
@@ -122,7 +125,7 @@ EOT
 
 ### Test stage (pytest) ###
 FROM ${base_image} AS test
-ARG BORG_BASE_DIR BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
+ARG BORG_BASE_DIR BORG_EXTRAS BORG_SRC_DIR BORG_VERSION BORG_WHEEL_DIR
 ARG PIP_CACHE_DIR PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION
 ARG PYTHONFAULTHANDLER=1
 ARG XDISTN=auto
@@ -135,7 +138,7 @@ RUN \
 	--mount=type=tmpfs,target=/tmp \
 	bash -eux -o pipefail <<-'EOT'
 		pip install pytest pytest-benchmark pytest-xdist python-dateutil
-		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: borgbackup=="${BORG_VERSION}"
+		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: "borgbackup${BORG_EXTRAS}==${BORG_VERSION}"
 
 		# Skip readonly tests as CAP_LINUX_IMMUTABLE is disabled by default in Docker
 		pytest --quiet -n "${XDISTN}" --disable-warnings --exitfirst --benchmark-skip -k 'not test_readonly' --pyargs borg.testsuite
@@ -145,7 +148,7 @@ EOT
 FROM ${base_image} AS final
 ARG \
 	base_image \
-	BORG_BASE_DIR BORG_FUSE_IMPL BORG_SRC_DIR BORG_WHEEL_DIR BORG_VERSION \
+	BORG_BASE_DIR BORG_EXTRAS BORG_FUSE_IMPL BORG_SRC_DIR BORG_WHEEL_DIR BORG_VERSION \
 	DEBIAN_FRONTEND=noninteractive \
 	PIP_CONSTRAINT PIP_DISABLE_PIP_VERSION_CHECK PIP_ROOT_USER_ACTION \
 	RCLONE_CACHE_DIR RCLONE_CONFIG \
@@ -177,7 +180,7 @@ EOT
 RUN \
 	--mount=type=bind,from=build,source=${BORG_SRC_DIR},target=${BORG_SRC_DIR} \
 	bash -eux -o pipefail <<-'EOT'
-		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: --no-compile borgbackup=="${BORG_VERSION}"
+		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: --no-compile "borgbackup${BORG_EXTRAS}==${BORG_VERSION}"
 		borg debug info --debug
 EOT
 
