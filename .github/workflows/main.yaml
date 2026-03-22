@@ -34,8 +34,8 @@ jobs:
             subfolder: "borg2"
             prerelease: true
             tag_major_minor: true
-            base_image: "docker.io/library/python:3.12-slim-bookworm"
-            distroless_image: "gcr.io/distroless/cc-debian12"
+            base_image: "docker.io/library/python:3.14-slim-trixie"
+            distroless_image: "gcr.io/distroless/cc-debian13"
     uses: ./.github/workflows/build-push.yaml
     secrets: inherit
     with:

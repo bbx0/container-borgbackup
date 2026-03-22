@@ -27,8 +27,8 @@ PUSH			:= true
 #: }}}
 
 #: Borg settings {{{
-borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.12-slim-bookworm
-borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian12
+borg(2.0):	BASE_IMAGE			:= docker.io/library/python:3.14-slim-trixie
+borg(2.0):	DISTROLESS_IMAGE	:= gcr.io/distroless/cc-debian13
 
 # Determine latest patch release, when version is not set explicitly
 borg(%):	VERSION				?= $(shell curl --fail --silent --location https://api.github.com/repos/borgbackup/borg/releases | jq -r 'map(select(.tag_name | startswith("$(%)")))|map(select(.prerelease==false and .draft==false))|max_by(.published_at).tag_name')

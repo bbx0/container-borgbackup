@@ -6,10 +6,10 @@
 #  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --opt build-arg:version=2.0.0b14 --progress=plain
 #  buildctl build --frontend gateway.v0 --opt source=docker.io/docker/dockerfile:1 --local context=. --local dockerfile=. --output type=image,name=localhost:5000/borgbackup:2.0.0b14,push=true --opt build-arg:version=2.0.0b14 --opt platform="linux/amd64,linux/arm64,linux/arm/v7"
 
-# Default to Debian 12, which is the latest platform for the BorgBackup standalone binary releases
+# Default to Debian 13 (Trixie), which is the latest platform for the BorgBackup standalone binary releases
 # the 'offical' python image provides a standalone python build under /usr/local
 # the 'slim' variant comes with pip, setuptools and wheel pre-installed
-ARG base_image=docker.io/python:3-slim-bookworm
+ARG base_image=docker.io/python:3.14-slim-trixie
 ARG rclone_image=docker.io/rclone/rclone:1
 ARG version
 
