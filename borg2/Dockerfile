@@ -35,6 +35,7 @@ FROM scratch AS source
 ADD https://keys.openpgp.org/vks/v1/by-fingerprint/6D5BEF9ADD2075805747B70F9F88FB52FAF7B393 signing_key.asc
 ARG version
 ADD --keep-git-dir=true https://github.com/borgbackup/borg.git#refs/tags/${version} /borg
+ADD --checksum=sha256:d6b0b943ad6956e6b9b7fe420d23b0d5d1694843f0003e10bc45f02ba75294fb https://github.com/borgbackup/borg/commit/d7b1cd53073c44343917bc761eab3247c9223d1c.patch?full_index=1 borg2.0.0b23_fix_32bit.patch
 
 ### Get the rclone Debian package ###
 # - Download the rclone Debian package based on the ${rclone_image} version
@@ -85,6 +86,10 @@ RUN --mount=type=bind,from=source,target=/mnt/source \
 		gpg --quiet --batch --with-colons --status-fd 2 --no-autostart --no-tty --import /mnt/source/signing_key.asc
 		git -C /mnt/source/borg verify-tag refs/tags/${BORG_VERSION}
 		git -C /mnt/source/borg archive refs/tags/${BORG_VERSION} | tar xf -
+
+		[ "${BORG_VERSION}" != "2.0.0b23" ] || {
+			patch --verbose --strip 1 --ignore-whitespace --input "/mnt/source/borg2.0.0b23_fix_32bit.patch" --unified
+		}
 EOT
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
