@@ -34,8 +34,7 @@ FROM scratch AS source
 # Signing Key: Thomas Waldmann <tw@waldmann-edv.de>
 ADD https://keys.openpgp.org/vks/v1/by-fingerprint/6D5BEF9ADD2075805747B70F9F88FB52FAF7B393 signing_key.asc
 ARG version
-ADD https://github.com/borgbackup/borg/releases/download/${version}/borgbackup-${version}.tar.gz borgbackup-${version}.tar.gz
-ADD https://github.com/borgbackup/borg/releases/download/${version}/borgbackup-${version}.tar.gz.asc borgbackup-${version}.tar.gz.asc
+ADD --keep-git-dir=true https://github.com/borgbackup/borg.git#refs/tags/${version} /borg
 
 ### Get the rclone Debian package ###
 # - Download the rclone Debian package based on the ${rclone_image} version
@@ -75,7 +74,7 @@ RUN \
 			build-essential \
 			libacl1-dev libffi-dev libssl-dev liblz4-dev libzstd-dev libxxhash-dev \
 			pkg-config \
-			sqv
+			git gpg gpgv
 EOT
 
 # Extract into build layer (verify gpg key)
@@ -83,8 +82,9 @@ ARG BORG_BASE_DIR BORG_EXTRAS BORG_FUSE_IMPL BORG_VERSION BORG_SRC_DIR BORG_WHEE
 WORKDIR ${BORG_SRC_DIR}
 RUN --mount=type=bind,from=source,target=/mnt/source \
 	bash -eux -o pipefail <<-'EOT'
-		sqv "/mnt/source/borgbackup-${BORG_VERSION}.tar.gz.asc" "/mnt/source/borgbackup-${BORG_VERSION}.tar.gz" --keyring /mnt/source/signing_key.asc
-		tar --extract --auto-compress --file="/mnt/source/borgbackup-${BORG_VERSION}.tar.gz" --strip-components=1
+		gpg --quiet --batch --with-colons --status-fd 2 --no-autostart --no-tty --import /mnt/source/signing_key.asc
+		git -C /mnt/source/borg verify-tag refs/tags/${BORG_VERSION}
+		git -C /mnt/source/borg archive refs/tags/${BORG_VERSION} | tar xf -
 EOT
 
 # Build and Install: Wheel for BorgBackup from source (and cache PIP and GIT repo across builds)
@@ -116,7 +116,7 @@ RUN \
 		# Build and install
 		pip install pkgconfig
 		pip wheel Cython --use-pep517 --config-setting="--build-option=--no-cython-compile"
-		pip wheel "${BORG_SRC_DIR}${BORG_EXTRAS}"
+		SETUPTOOLS_SCM_PRETEND_VERSION_FOR_BORGBACKUP="${BORG_VERSION}" pip wheel "${BORG_SRC_DIR}${BORG_EXTRAS}"
 		pip install --no-index --no-cache-dir --find-links="${BORG_WHEEL_DIR}" --only-binary=:all: "borgbackup${BORG_EXTRAS}==${BORG_VERSION}"
 		
 		# Test: Run self-tests
